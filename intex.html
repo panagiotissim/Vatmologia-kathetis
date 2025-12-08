@@ -1,1 +1,909 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Αθλητική Αλιεία — Βαθμοί Ποινής</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg:#0f172a;
+    --card:#111827;
+    --ink:#e5e7eb;
+    --muted:#9ca3af;
+    --accent:#22c55e;
+    --danger:#ef4444;
+    --warn:#f59e0b;
+    --line:#1f2937;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:linear-gradient(120deg,#020617,#0f172a);
+    color:var(--ink);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+  }
+  header{
+    padding:16px;
+    border-bottom:1px solid var(--line);
+    background:rgba(15,23,42,.9);
+    backdrop-filter:blur(6px);
+    position:sticky;
+    top:0;
+    z-index:10;
+  }
+  h1{margin:0;font-size:18px}
+  nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  nav button{
+    padding:10px 14px;
+    border-radius:12px;
+    border:1px solid #273244;
+    background:#020617;
+    color:var(--ink);
+    cursor:pointer;
+    min-height:40px;
+    font-size:14px;
+  }
+  nav button.active{
+    background:var(--accent);
+    color:#052e16;
+    border-color:transparent;
+    font-weight:700;
+  }
+  .wrap{max-width:1200px;margin:16px auto;padding:0 16px}
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px;
+    margin-bottom:16px;
+  }
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .row>*{flex:1}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+  input,select,button{
+    width:100%;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid #273244;
+    background:#020617;
+    color:var(--ink);
+    font-size:14px;
+  }
+  button.primary{background:var(--accent);color:#052e16;border-color:transparent;font-weight:600;cursor:pointer}
+  button.ghost{background:#020617;cursor:pointer}
+  button.warn{background:var(--warn);color:#111827;border-color:transparent;cursor:pointer}
+  button.danger{background:var(--danger);color:#fff;border-color:transparent;cursor:pointer}
+  .muted{color:var(--muted)} .small{font-size:12px}
+  .pill{
+    display:inline-block;
+    padding:5px 9px;
+    border-radius:999px;
+    background:#020617;
+    border:1px solid #1f2937;
+    font-size:11px;
+    margin:2px 4px 0 0;
+  }
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  th,td{
+    border-bottom:1px solid var(--line);
+    padding:6px 8px;
+    text-align:left;
+    white-space:nowrap;
+    font-size:12px;
+  }
+  th{color:var(--muted);font-weight:600}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .table-wrap table{min-width:900px}
+  @media (max-width:900px){ .row{flex-direction:column} }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎣 Αθλητική Αλιεία — Σύστημα Βαθμών Ποινής</h1>
+  <nav id="topNav">
+    <button data-page="p-participants" class="active">Συμμετέχοντες</button>
+    <button data-page="p-draw">Ημέρες & Κλήρωση</button>
+    <button data-page="p-entry">Καταγραφή</button>
+    <button data-page="p-scores">Βαθμολογίες</button>
+    <button data-page="p-settings">Ρυθμίσεις</button>
+  </nav>
+</header>
 
+<div class="wrap">
+  <!-- ΣΥΜΜΕΤΕΧΟΝΤΕΣ -->
+  <section id="p-participants" class="page">
+    <div class="card">
+      <h2>Συμμετέχοντες</h2>
+      <div class="row">
+        <div><label>Ονοματεπώνυμο</label><input id="athName" placeholder="π.χ. Νίκος Παπαδόπουλος"></div>
+        <div><label>Σύλλογος</label><input id="athClub" placeholder="π.χ. Ν.Ο. Πόλης"></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div><label>Αρ. Μητρώου</label><input id="athReg" placeholder="π.χ. 12345"></div>
+        <div><label>Χορηγός</label><input id="athSponsor" placeholder="π.χ. Shimano"></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="primary" id="addAthleteBtn">➕ Προσθήκη</button>
+        <button class="ghost" id="bulkBtn">📥 Μαζική εισαγωγή</button>
+        <input id="excelInput" type="file" accept=".xlsx,.xls,.csv" style="display:none">
+        <button class="warn" id="excelBtn">🗂️ Εισαγωγή από Excel</button>
+      </div>
+      <div class="small muted" style="margin-top:4px">
+        CSV/clipboard: <code>Όνομα, Σύλλογος, Αρ. Μητρώου, Χορηγός</code>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Λίστα συμμετεχόντων</h2>
+      <div class="table-wrap" id="athletesTableWrap"></div>
+    </div>
+  </section>
+
+  <!-- ΗΜΕΡΕΣ & ΚΛΗΡΩΣΗ -->
+  <section id="p-draw" class="page" style="display:none">
+    <div class="card">
+      <h2>Ημέρες</h2>
+      <div class="row" style="margin-top:4px">
+        <button class="primary" id="addDayBtn">➕ Προσθήκη ημέρας</button>
+      </div>
+      <div class="pill small" style="margin-top:8px">Ενεργή ημέρα:</div>
+      <div id="daysTabs" style="margin-top:4px"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <h2>Κλήρωση τομέων & θέσεων</h2>
+        <div class="row" style="flex:0;gap:6px">
+          <button class="primary" id="drawBtn">🎲 Κλήρωση</button>
+          <button class="ghost" id="clearDrawBtn">↩️ Καθαρισμός</button>
+          <button class="ghost" id="exportDrawBtn">⬇️ Εξαγωγή κλήρωσης (Excel)</button>
+        </div>
+      </div>
+      <div id="sectorInfo" class="small muted" style="margin-top:4px"></div>
+      <div class="table-wrap" id="drawTableWrap" style="margin-top:8px"></div>
+    </div>
+  </section>
+
+  <!-- ΚΑΤΑΓΡΑΦΗ -->
+  <section id="p-entry" class="page" style="display:none">
+    <div class="card">
+      <h2>Καταγραφή (ανά ημέρα) — Κατηγορίες & Βαθμοί Ποινής</h2>
+      <div class="small muted">
+        Κατηγορίες 1–5 με αντίστοιχη ποινή (1,2,3,4,5 βαθμοί) ανά ψάρι.<br>
+        <b>Β. Ποινής = Σ (κατηγορία × ποσότητα)</b> — στην κατάταξη <b>πρώτος είναι αυτός με τους ΠΕΡΙΣΣΟΤΕΡΟΥΣ βαθμούς ποινής</b>.<br>
+        Ισοβαθμία: 1) περισσότερα ψάρια, 2) μεγαλύτερο αλίευμα.
+      </div>
+      <div class="table-wrap" id="resultsTableWrap" style="margin-top:8px"></div>
+    </div>
+  </section>
+
+  <!-- ΒΑΘΜΟΛΟΓΙΕΣ -->
+  <section id="p-scores" class="page" style="display:none">
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <h2>Βαθμολογίες</h2>
+        <button class="primary" id="exportScoresBtn">⬇️ Εξαγωγή Excel</button>
+      </div>
+      <div id="scoreTabs" style="margin-top:8px"></div>
+      <div class="table-wrap" id="scoreTables"></div>
+    </div>
+  </section>
+
+  <!-- ΡΥΘΜΙΣΕΙΣ -->
+  <section id="p-settings" class="page" style="display:none">
+    <div class="card">
+      <h2>Ρυθμίσεις</h2>
+      <div class="row">
+        <div>
+          <label>Όνομα διοργάνωσης</label>
+          <input id="eventName" placeholder="π.χ. Πρωτάθλημα Βαθμών Ποινής">
+        </div>
+        <div>
+          <label>Αριθμός τομέων για την κλήρωση</label>
+          <input id="numSectors" type="number" min="1" max="26" value="5">
+        </div>
+      </div>
+      <div class="small muted" style="margin-top:6px">
+        Κλήρωση: οι αθλητές μοιράζονται όσο γίνεται ισόποσα στους τομείς (A, B, C, ...).<br>
+        Όσο γίνεται, αθλητές της ίδιας ομάδας δεν πέφτουν στον ίδιο τομέα (αν οι αθλητές του συλλόγου είναι περισσότεροι από τους τομείς, αρχίζουν να συναντιούνται).
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-top:8px">
+        <button class="ghost" id="saveStateBtn">💾 Αποθήκευση</button>
+        <button class="ghost" id="loadStateBtn">📂 Φόρτωση</button>
+        <button class="danger" id="resetBtn">🧹 Μηδενισμός</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ============ ΒΟΗΘΗΤΙΚΑ ============ */
+function $(id){return document.getElementById(id);}
+function uid(){return Math.random().toString(36).slice(2,9);}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function safe(s){s = s==null ? "" : String(s); return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function ceilDiv(a,b){return Math.ceil(a/b);}
+
+/* ============ ΚΑΤΑΣΤΑΣΗ ============ */
+let state = {
+  settings: {
+    eventName: "",
+    numSectors: 5
+  },
+  athletes: [], // {id,name,club,regNo,sponsor}
+  days: [],     // {id,name,draw:{athId:{sector,peg}},results:{athId:{cats[5],biggest,status}}}
+  activeDayId: null
+};
+
+function save(){localStorage.setItem("fishing_penalty_v2",JSON.stringify(state));}
+function load(){
+  const raw=localStorage.getItem("fishing_penalty_v2");
+  if(!raw) return false;
+  state = JSON.parse(raw);
+  return true;
+}
+function activeDay(){return state.days.find(d=>d.id===state.activeDayId)||null;}
+function sectorLabels(){
+  const n=Math.max(1,Math.min(26,Number(state.settings.numSectors)||1));
+  const arr=[];
+  for(let i=0;i<n;i++) arr.push(String.fromCharCode(65+i)); // A,B,...
+  return arr;
+}
+
+/* ============ ΠΛΟΗΓΗΣΗ ============ */
+function showPage(pid){
+  document.querySelectorAll(".page").forEach(p=>p.style.display=(p.id===pid?"block":"none"));
+  document.querySelectorAll("#topNav button").forEach(b=>b.classList.toggle("active",b.getAttribute("data-page")===pid));
+  renderAll();
+}
+
+document.getElementById("topNav").addEventListener("click",e=>{
+  if(e.target.tagName==="BUTTON") showPage(e.target.dataset.page);
+});
+
+/* ============ ΣΥΜΜΕΤΕΧΟΝΤΕΣ ============ */
+function renderAthletes(){
+  const wrap=$("athletesTableWrap");
+  if(!state.athletes.length){
+    wrap.innerHTML='<p class="muted">Δεν υπάρχουν συμμετέχοντες.</p>';
+    return;
+  }
+  let html='<table><thead><tr><th>#</th><th>Όνομα</th><th>Σύλλογος</th><th>Αρ. Μητρώου</th><th>Χορηγός</th><th></th></tr></thead><tbody>';
+  state.athletes.forEach((a,i)=>{
+    html+=`<tr>
+      <td>${i+1}</td>
+      <td>${safe(a.name)}</td>
+      <td>${safe(a.club||"")}</td>
+      <td>${safe(a.regNo||"")}</td>
+      <td>${safe(a.sponsor||"")}</td>
+      <td><button class="danger" data-del="${a.id}">✖</button></td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+  wrap.querySelectorAll("[data-del]").forEach(btn=>{
+    btn.onclick=()=>{
+      const id=btn.dataset.del;
+      state.athletes=state.athletes.filter(a=>a.id!==id);
+      state.days.forEach(d=>{ if(d.draw) delete d.draw[id]; if(d.results) delete d.results[id]; });
+      save(); renderAll();
+    };
+  });
+}
+
+/* ============ ΗΜΕΡΕΣ ============ */
+function renderDaysTabs(){
+  const wrap=$("daysTabs");
+  wrap.innerHTML="";
+  if(!state.days.length){
+    wrap.innerHTML='<span class="muted small">Καμία ημέρα ακόμη.</span>';
+    return;
+  }
+  state.days.forEach((d,i)=>{
+    const b=document.createElement("button");
+    b.className="pill";
+    if(d.id===state.activeDayId) b.style.borderColor="#22c55e";
+    b.textContent=d.name||`Ημέρα ${i+1}`;
+    b.onclick=()=>{state.activeDayId=d.id; save(); renderAll();};
+    wrap.appendChild(b);
+  });
+}
+
+/* ============ ΚΛΗΡΩΣΗ ============ */
+function renderDraw(){
+  const wrap=$("drawTableWrap");
+  const info=$("sectorInfo");
+  const d=activeDay();
+  const sectors=sectorLabels();
+  info.textContent = `Τομείς: ${sectors.join(", ")} — Σύνολο αθλητών: ${state.athletes.length}`;
+  if(!d){
+    wrap.innerHTML='<p class="muted">Πρόσθεσε ημέρα.</p>';
+    return;
+  }
+  const rows=state.athletes.map(a=>({a,dd:d.draw && d.draw[a.id]}))
+    .sort((x,y)=>{
+      const sx=x.dd?x.dd.sector:"";
+      const sy=y.dd?y.dd.sector:"";
+      if(sx===sy){
+        const px=x.dd?x.dd.peg:999999;
+        const py=y.dd?y.dd.peg:999999;
+        return px-py;
+      }
+      return sx.localeCompare(sy);
+    });
+  let html='<table><thead><tr><th>#</th><th>Όνομα</th><th>Σύλλογος</th><th>Τομέας</th><th>Θέση</th></tr></thead><tbody>';
+  rows.forEach((r,i)=>{
+    html+=`<tr>
+      <td>${i+1}</td>
+      <td>${safe(r.a.name)}</td>
+      <td>${safe(r.a.club||"")}</td>
+      <td>${r.dd?safe(r.dd.sector):"-"}</td>
+      <td>${r.dd?safe(r.dd.peg):"-"}</td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+}
+
+function doDraw(){
+  const d=activeDay();
+  if(!d){alert("Δεν υπάρχει ενεργή ημέρα.");return;}
+  const sectors=sectorLabels();
+  const N=state.athletes.length;
+  if(!N){alert("Δεν υπάρχουν αθλητές.");return;}
+  const S=sectors.length;
+  const base=Math.floor(N/S);
+  const rem=N%S;
+  const capacity=new Map();
+  sectors.forEach((s,i)=>capacity.set(s, base+(i<rem?1:0)));
+  const buckets=new Map(sectors.map(s=>[s,[]]));
+  const clubInSec=new Map(sectors.map(s=>[s,new Set()]));
+  const filled=new Map(sectors.map(s=>[s,0]));
+
+  // ομαδοποίηση ανά σύλλογο
+  const byClub=new Map();
+  state.athletes.forEach(a=>{
+    const c=(a.club||"-").trim()||"-";
+    if(!byClub.has(c)) byClub.set(c,[]);
+    byClub.get(c).push(a);
+  });
+  const clubs=Array.from(byClub.entries()).sort((a,b)=>b[1].length-a[1].length);
+  const ordered=[];
+  clubs.forEach(([c,arr])=>{
+    shuffle(arr);
+    arr.forEach(a=>ordered.push(a));
+  });
+
+  function hasRoom(sec){return filled.get(sec)<capacity.get(sec);}
+  function place(sec,a){
+    buckets.get(sec).push(a.id);
+    filled.set(sec,filled.get(sec)+1);
+    clubInSec.get(sec).add((a.club||"-").trim());
+  }
+
+  ordered.forEach(a=>{
+    const c=(a.club||"-").trim()||"-";
+    let choices=sectors.filter(s=>hasRoom(s)&&!clubInSec.get(s).has(c));
+    if(!choices.length) choices=sectors.filter(s=>hasRoom(s));
+    if(!choices.length) return;
+    choices.sort((s1,s2)=>filled.get(s1)-filled.get(s2));
+    place(choices[0],a);
+  });
+
+  d.draw={};
+  let pos=1;
+  sectors.forEach(sec=>{
+    const list=buckets.get(sec)||[];
+    shuffle(list);
+    list.forEach(id=>{
+      d.draw[id]={sector:sec,peg:pos++};
+    });
+  });
+}
+
+/* ============ ΚΑΤΑΓΡΑΦΗ ============ */
+function renderResults(){
+  const wrap=$("resultsTableWrap");
+  const d=activeDay();
+  if(!d){
+    wrap.innerHTML='<p class="muted">Πρόσθεσε ημέρα & κλήρωση.</p>';
+    return;
+  }
+  const rows=state.athletes.map(a=>({a,dd:d.draw && d.draw[a.id]}))
+    .sort((x,y)=>{
+      const sx=x.dd?x.dd.sector:"";
+      const sy=y.dd?y.dd.sector:"";
+      if(sx===sy){
+        const px=x.dd?x.dd.peg:999999;
+        const py=y.dd?y.dd.peg:999999;
+        return px-py;
+      }
+      return sx.localeCompare(sy);
+    });
+
+  let html='<table><thead><tr>';
+  html+='<th>#</th><th>Όνομα</th><th>Σύλλογος</th><th>Τομέας</th><th>Θέση</th>';
+  html+='<th>Cat1</th><th>Cat2</th><th>Cat3</th><th>Cat4</th><th>Cat5</th>';
+  html+='<th>Σύνολο ψαριών</th><th>Β. Ποινής</th><th>Μεγ. ψάρι (g)</th><th>Κατάσταση</th>';
+  html+='</tr></thead><tbody>';
+
+  if(!d.results) d.results={};
+
+  rows.forEach((r,i)=>{
+    const id=r.a.id;
+    const res=d.results[id] || {cats:[0,0,0,0,0],biggest:0,status:"OK"};
+    const cats=res.cats || [0,0,0,0,0];
+    const total=cats.reduce((s,x)=>s+Number(x||0),0);
+    const penalty=cats.reduce((s,x,idx)=>s+Number(x||0)*(idx+1),0);
+    html+=`<tr>
+      <td>${i+1}</td>
+      <td>${safe(r.a.name)}</td>
+      <td>${safe(r.a.club||"")}</td>
+      <td>${r.dd?safe(r.dd.sector):"-"}</td>
+      <td>${r.dd?safe(r.dd.peg):"-"}</td>
+      ${cats.map((v,ci)=>`<td><input type="number" min="0" data-id="${id}" data-f="cat${ci}" value="${v}"></td>`).join("")}
+      <td>${total}</td>
+      <td>${penalty}</td>
+      <td><input type="number" min="0" data-id="${id}" data-f="biggest" value="${res.biggest||0}"></td>
+      <td>
+        <select data-id="${id}" data-f="status">
+          <option value="OK" ${res.status==="OK"?"selected":""}>OK</option>
+          <option value="DQ" ${res.status==="DQ"?"selected":""}>DQ</option>
+          <option value="NS" ${res.status==="NS"?"selected":""}>NS</option>
+        </select>
+      </td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+
+  wrap.querySelectorAll("input,select").forEach(el=>{
+    el.oninput=()=>{
+      const id=el.dataset.id;
+      const field=el.dataset.f;
+      if(!d.results[id]) d.results[id]={cats:[0,0,0,0,0],biggest:0,status:"OK"};
+      const obj=d.results[id];
+      if(field.startsWith("cat")){
+        const idx=Number(field.replace("cat",""));
+        obj.cats[idx]=Number(el.value||0);
+      }else if(field==="biggest"){
+        obj.biggest=Number(el.value||0);
+      }else if(field==="status"){
+        obj.status=el.value;
+      }
+      save();
+      renderResults(); // για να ανανεωθούν σύνολα/ποινή
+      renderScores();
+    };
+  });
+}
+
+/* ============ ΥΠΟΛΟΓΙΣΜΟΙ ============ */
+// υπολογισμός γραμμών μίας ημέρας
+function computeDayRows(dayId){
+  const d=state.days.find(x=>x.id===dayId);
+  if(!d) return [];
+  const rows=[];
+  state.athletes.forEach(a=>{
+    const dd=d.draw && d.draw[a.id];
+    if(!dd) return;
+    const res=(d.results && d.results[a.id]) || {cats:[0,0,0,0,0],biggest:0,status:"OK"};
+    const cats=res.cats||[0,0,0,0,0];
+    const totalFish=cats.reduce((s,x)=>s+Number(x||0),0);
+    let penalty=cats.reduce((s,x,idx)=>s+Number(x||0)*(idx+1),0);
+    let biggest=Number(res.biggest||0);
+    if(res.status!=="OK"){
+      // DQ/NS: τους κρατάμε τελευταίους → 0 βαθμοί ποινής
+      penalty = 0;
+      biggest = 0;
+    }
+    rows.push({
+      id:a.id,
+      name:a.name,
+      club:a.club||"",
+      regNo:a.regNo||"",
+      sponsor:a.sponsor||"",
+      sector:dd.sector,
+      peg:dd.peg,
+      cats:cats.slice(),
+      totalFish,
+      penalty,
+      biggest,
+      status:res.status
+    });
+  });
+  // κατάταξη ημέρας:
+  // 1) ΠΕΡΙΣΣΟΤΕΡΟΙ Β. ΠΟΙΝΗΣ ΚΑΛΥΤΕΡΑ
+  // 2) περισσότερα ψάρια
+  // 3) μεγαλύτερο ψάρι
+  rows.sort((a,b)=>{
+    return (b.penalty-a.penalty) ||
+           (b.totalFish-a.totalFish) ||
+           (b.biggest-a.biggest) ||
+           a.name.localeCompare(b.name,'el');
+  });
+  return rows;
+}
+
+// συνολικό ατομικό: άθροισμα ποινών (μεγαλύτερο καλύτερο)
+function computeAggregate(){
+  const agg=new Map();
+  state.athletes.forEach(a=>{
+    agg.set(a.id,{
+      id:a.id,
+      name:a.name,
+      club:a.club||"",
+      regNo:a.regNo||"",
+      sponsor:a.sponsor||"",
+      totalPenalty:0,
+      totalFish:0,
+      bestBiggest:0
+    });
+  });
+  state.days.forEach(d=>{
+    const rows=computeDayRows(d.id);
+    const byId=new Map(rows.map(r=>[r.id,r]));
+    agg.forEach((v,id)=>{
+      const r=byId.get(id);
+      if(!r) return;
+      v.totalPenalty += r.penalty;
+      // DQ/NS έχουν penalty 0, οπότε δεν ανεβάζουν τον αθροιστικό
+      v.totalFish += r.totalFish;
+      v.bestBiggest = Math.max(v.bestBiggest, r.biggest);
+    });
+  });
+  const out=Array.from(agg.values());
+  // εδώ πάλι: περισσότεροι πόντοι ποινής = καλύτερη θέση
+  out.sort((a,b)=>{
+    return (b.totalPenalty-a.totalPenalty) ||
+           (b.totalFish-a.totalFish) ||
+           (b.bestBiggest-a.bestBiggest) ||
+           a.name.localeCompare(b.name,'el');
+  });
+  return out;
+}
+
+// ομαδικό: 2 καλύτεροι ανά σύλλογο από τη συνολική
+function computeTeamAggregate(){
+  const ind=computeAggregate();
+  const byClub=new Map();
+  ind.forEach(r=>{
+    const c=(r.club||"-").trim()||"-";
+    if(!byClub.has(c)) byClub.set(c,[]);
+    byClub.get(c).push(r);
+  });
+  const teams=[];
+  byClub.forEach((list,club)=>{
+    if(list.length<2) return;
+    // καλύτεροι = περισσότεροι συνολικοί βαθμοί ποινής
+    list.sort((a,b)=>{
+      return (b.totalPenalty-a.totalPenalty) ||
+             (b.totalFish-a.totalFish) ||
+             (b.bestBiggest-a.bestBiggest);
+    });
+    const best2=list.slice(0,2);
+    const teamPenalty=best2[0].totalPenalty+best2[1].totalPenalty;
+    const teamFish=best2[0].totalFish+best2[1].totalFish;
+    const teamBig=Math.max(best2[0].bestBiggest,best2[1].bestBiggest);
+    teams.push({
+      club,
+      members:best2.map(x=>x.name),
+      teamPenalty,
+      teamFish,
+      teamBig
+    });
+  });
+  teams.sort((a,b)=>{
+    return (b.teamPenalty-a.teamPenalty) ||
+           (b.teamFish-a.teamFish) ||
+           (b.teamBig-a.teamBig) ||
+           a.club.localeCompare(b.club,'el');
+  });
+  return teams;
+}
+
+/* ============ ΒΑΘΜΟΛΟΓΙΕΣ UI ============ */
+function makeTable(rows,title,headers){
+  let html=`<h3 style="margin:6px 0">${safe(title)}</h3><table><thead><tr>`;
+  headers.forEach(h=>html+=`<th>${safe(h)}</th>`);
+  html+='</tr></thead><tbody>';
+  rows.forEach(r=>{
+    html+='<tr>'+r.map(c=>`<td>${safe(c)}</td>`).join('')+'</tr>';
+  });
+  html+='</tbody></table>';
+  return html;
+}
+
+function renderScores(){
+  const tabs=$("scoreTabs"), area=$("scoreTables");
+  tabs.innerHTML=""; area.innerHTML="";
+  const d=activeDay();
+
+  // ημέρα (ατομικό)
+  if(d){
+    const b=document.createElement("button");
+    b.className="pill";
+    b.textContent=`Ημέρα: ${d.name} — Ατομικό`;
+    b.onclick=()=>{
+      const rows=computeDayRows(d.id);
+      const out=rows.map((r,i)=>[
+        i+1,
+        r.penalty,
+        r.totalFish,
+        r.biggest,
+        r.name,
+        r.club,
+        r.regNo,
+        r.sponsor,
+        r.sector,
+        r.peg,
+        r.cats[0],r.cats[1],r.cats[2],r.cats[3],r.cats[4],
+        r.status
+      ]);
+      area.innerHTML=makeTable(
+        out,
+        "Κατάταξη ημέρας (ΠΕΡΙΣΣΟΤΕΡΟΙ Β. ΠΟΙΝΗΣ → περισσότερα ψάρια → μεγαλύτερο ψάρι)",
+        ["#","Β. Ποινής","Σύνολο ψαριών","Μεγ. ψάρι(g)","Όνομα","Σύλλογος","Αρ. Μητρώου","Χορηγός","Τομέας","Θέση","Cat1","Cat2","Cat3","Cat4","Cat5","Κατάσταση"]
+      );
+    };
+    tabs.appendChild(b);
+    b.click();
+  }
+
+  // συνολικό ατομικό
+  {
+    const b=document.createElement("button");
+    b.className="pill";
+    b.textContent="Συνολικό Ατομικό (άθροισμα Β. Ποινής)";
+    b.onclick=()=>{
+      const rows=computeAggregate();
+      const out=rows.map((r,i)=>[
+        i+1,
+        r.totalPenalty,
+        r.totalFish,
+        r.bestBiggest,
+        r.name,
+        r.club,
+        r.regNo,
+        r.sponsor
+      ]);
+      area.innerHTML=makeTable(
+        out,
+        "Συνολική Ατομική Κατάταξη (περισσότεροι συνολικοί βαθμοί ποινής καλύτερα)",
+        ["#","Σύνολο Β. Ποινής","Συνολικά ψάρια","Καλύτερο μεγ. ψάρι(g)","Όνομα","Σύλλογος","Αρ. Μητρώου","Χορηγός"]
+      );
+    };
+    tabs.appendChild(b);
+  }
+
+  // ομαδικό (2 καλύτεροι)
+  {
+    const b=document.createElement("button");
+    b.className="pill";
+    b.textContent="Ομαδικό (2 καλύτεροι ανά σύλλογο)";
+    b.onclick=()=>{
+      const teams=computeTeamAggregate();
+      const out=teams.map((t,i)=>[
+        i+1,
+        t.club,
+        t.teamPenalty,
+        t.teamFish,
+        t.teamBig,
+        t.members.join(", ")
+      ]);
+      area.innerHTML=makeTable(
+        out,
+        "Ομαδικό Πρωταθλήματος (2 καλύτεροι ανά σύλλογο, περισσότεροι βαθμοί ποινής καλύτερα)",
+        ["#","Σύλλογος","Σύνολο Β. Ποινής","Συνολικά ψάρια","Καλύτερο μεγ. ψάρι(g)","Αθλητές που μετρούν"]
+      );
+    };
+    tabs.appendChild(b);
+  }
+}
+
+/* ============ ΕΞΑΓΩΓΕΣ ============ */
+function exportDrawExcel(){
+  const d=activeDay();
+  if(!d || !d.draw || !Object.keys(d.draw).length){alert("Δεν υπάρχει κλήρωση.");return;}
+  const rows=state.athletes.map(a=>{
+    const dd=d.draw[a.id]||{};
+    return {
+      "Όνομα":a.name,
+      "Σύλλογος":a.club||"",
+      "Αρ. Μητρώου":a.regNo||"",
+      "Χορηγός":a.sponsor||"",
+      "Τομέας":dd.sector||"",
+      "Θέση":dd.peg||""
+    };
+  }).sort((x,y)=>{
+    return String(x["Τομέας"]).localeCompare(String(y["Τομέας"])) ||
+           (Number(x["Θέση"]||999999)-Number(y["Θέση"]||999999));
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),"Κλήρωση");
+  const name=(state.settings.eventName||"Klirosi");
+  XLSX.writeFile(wb,`Klirosi_${name}.xlsx`);
+}
+
+function exportScoresExcel(){
+  const wb=XLSX.utils.book_new();
+  const agg=computeAggregate().map((r,i)=>({
+    "#":i+1,
+    "Όνομα":r.name,
+    "Σύλλογος":r.club,
+    "Αρ. Μητρώου":r.regNo,
+    "Χορηγός":r.sponsor,
+    "Σύνολο Β. Ποινής":r.totalPenalty,
+    "Συνολικά ψάρια":r.totalFish,
+    "Καλύτερο μεγ. ψάρι(g)":r.bestBiggest
+  }));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(agg),"Ατομικό-Σύνολο");
+
+  const teams=computeTeamAggregate().map((t,i)=>({
+    "#":i+1,
+    "Σύλλογος":t.club,
+    "Σύνολο Β. Ποινής":t.teamPenalty,
+    "Συνολικά ψάρια":t.teamFish,
+    "Καλύτερο μεγ. ψάρι(g)":t.teamBig,
+    "Αθλητές":t.members.join(", ")
+  }));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(teams),"Ομαδικό-Σύνολο");
+
+  state.days.forEach(d=>{
+    const rows=computeDayRows(d.id).map((r,i)=>({
+      "#":i+1,
+      "Β. Ποινής":r.penalty,
+      "Σύνολο ψαριών":r.totalFish,
+      "Μεγ. ψάρι(g)":r.biggest,
+      "Όνομα":r.name,
+      "Σύλλογος":r.club,
+      "Αρ. Μητρώου":r.regNo,
+      "Χορηγός":r.sponsor,
+      "Τομέας":r.sector,
+      "Θέση":r.peg,
+      "Cat1":r.cats[0],
+      "Cat2":r.cats[1],
+      "Cat3":r.cats[2],
+      "Cat4":r.cats[3],
+      "Cat5":r.cats[4],
+      "Κατάσταση":r.status
+    }));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),d.name||"Ημέρα");
+  });
+
+  const name=(state.settings.eventName||"Scores");
+  XLSX.writeFile(wb,`Scores_${name}.xlsx`);
+}
+
+/* ============ IMPORT ΑΘΛΗΤΩΝ ============ */
+function importAthletesFromFile(ev){
+  const file=ev.target.files[0];
+  if(!file)return;
+  const name=file.name.toLowerCase();
+  const reader=new FileReader();
+  if(name.endsWith(".csv")){
+    reader.onload=()=>{
+      const lines=reader.result.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+      lines.forEach(line=>{
+        const parts=line.split(",");
+        const nm=(parts[0]||"").trim(); if(!nm)return;
+        const club=(parts[1]||"").trim();
+        const reg=(parts[2]||"").trim();
+        const spo=(parts[3]||"").trim();
+        state.athletes.push({id:uid(),name:nm,club,regNo:reg,sponsor:spo});
+      });
+      save(); renderAll(); ev.target.value="";
+    };
+    reader.readAsText(file,"utf-8");
+  }else{
+    reader.onload=e=>{
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:"array"});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const arr=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
+      arr.forEach((row,idx)=>{
+        if(idx===0 && String(row[0]).toLowerCase().includes("ονομα")) return;
+        const nm=String(row[0]||"").trim(); if(!nm)return;
+        const club=String(row[1]||"").trim();
+        const reg=String(row[2]||"").trim();
+        const spo=String(row[3]||"").trim();
+        state.athletes.push({id:uid(),name:nm,club,regNo:reg,sponsor:spo});
+      });
+      save(); renderAll(); ev.target.value="";
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+/* ============ RENDER ΟΛΩΝ ============ */
+function renderAll(){
+  $("eventName").value = state.settings.eventName||"";
+  $("numSectors").value = state.settings.numSectors||5;
+  renderAthletes();
+  renderDaysTabs();
+  renderDraw();
+  renderResults();
+  renderScores();
+}
+
+/* ============ ΔΕΣΙΜΟ EVENTS ============ */
+function bindEvents(){
+  $("addAthleteBtn").onclick=()=>{
+    const name=$("athName").value.trim();
+    if(!name) return;
+    const club=$("athClub").value.trim();
+    const reg=$("athReg").value.trim();
+    const spo=$("athSponsor").value.trim();
+    state.athletes.push({id:uid(),name,club,regNo:reg,sponsor:spo});
+    ["athName","athClub","athReg","athSponsor"].forEach(id=>{$(id).value="";});
+    save(); renderAll();
+  };
+  $("bulkBtn").onclick=()=>{
+    const txt=prompt("Επικόλλησε λίστα (Όνομα[, Σύλλογος[, Αρ. Μητρώου[, Χορηγός]]]) — μία γραμμή ανά αθλητή","");
+    if(!txt)return;
+    txt.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).forEach(line=>{
+      const p=line.split(",");
+      const name=(p[0]||"").trim(); if(!name)return;
+      const club=(p[1]||"").trim();
+      const reg=(p[2]||"").trim();
+      const spo=(p[3]||"").trim();
+      state.athletes.push({id:uid(),name,club,regNo:reg,sponsor:spo});
+    });
+    save(); renderAll();
+  };
+  $("excelBtn").onclick=()=>{$("excelInput").click();};
+  $("excelInput").onchange=importAthletesFromFile;
+
+  $("addDayBtn").onclick=()=>{
+    const id=uid();
+    const idx=state.days.length+1;
+    state.days.push({id,name:`Ημέρα ${idx}`,draw:{},results:{}});
+    state.activeDayId=id;
+    save(); renderAll();
+  };
+
+  $("drawBtn").onclick=()=>{doDraw(); save(); renderDraw(); renderResults(); renderScores();};
+  $("clearDrawBtn").onclick=()=>{
+    const d=activeDay();
+    if(!d)return;
+    d.draw={};
+    save(); renderDraw(); renderResults(); renderScores();
+  };
+  $("exportDrawBtn").onclick=exportDrawExcel;
+  $("exportScoresBtn").onclick=exportScoresExcel;
+
+  $("eventName").oninput=e=>{
+    state.settings.eventName=e.target.value;
+    save();
+  };
+  $("numSectors").oninput=e=>{
+    const v=Math.max(1,Math.min(26,Number(e.target.value)||1));
+    state.settings.numSectors=v;
+    e.target.value=v;
+    save(); renderDraw(); renderResults(); renderScores();
+  };
+
+  $("saveStateBtn").onclick=()=>{save();alert("Αποθηκεύτηκε στον browser.");};
+  $("loadStateBtn").onclick=()=>{if(load()) renderAll(); else alert("Δεν βρέθηκαν αποθηκευμένα δεδομένα.");};
+  $("resetBtn").onclick=()=>{
+    if(confirm("Σίγουρα να γίνει μηδενισμός;")){localStorage.removeItem("fishing_penalty_v2"); location.reload();}
+  };
+}
+
+/* ============ INIT ============ */
+window.addEventListener("load",()=>{
+  load();
+  if(!state.days.length){
+    const id=uid();
+    state.days.push({id,name:"Ημέρα 1",draw:{},results:{}});
+    state.activeDayId=id;
+  }else if(!state.activeDayId){
+    state.activeDayId=state.days[0].id;
+  }
+  bindEvents();
+  showPage("p-participants");
+});
+</script>
+</body>
+</html>
