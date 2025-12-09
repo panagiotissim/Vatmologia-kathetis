@@ -555,13 +555,24 @@ function renderResults(){
       <td>${safe(r.a.club||"")}</td>
       <td>${r.dd ? safe(r.dd.sector) : "-"}</td>
       <td>${r.dd ? safe(r.dd.peg) : "-"}</td>
-      ${
+     ${
   cats.map((v,ci)=>{
     const disp = (v==null || v==="") ? "" : v;
-    // type="text" + inputmode="numeric" για να βλέπεις ΣΙΓΟΥΡΑ αυτό που γράφεις
-    return `<td><input class="field-input" type="text" inputmode="numeric" pattern="[0-9]*" data-id="${id}" data-f="cat${ci}" value="${disp}"></td>`;
+    return `<td>
+      <input
+        class="field-input"
+        type="text"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        data-id="${id}"
+        data-f="cat${ci}"
+        value="${disp}"
+        style="background:#ffffff !important;color:#000000 !important;font-size:18px !important;"
+      >
+    </td>`;
   }).join("")
 }
+
       <td data-role="totalFish">${total}</td>
       <td data-role="penalty">${penalty}</td>
       <td><input class="field-input" type="number" min="0" data-id="${id}" data-f="biggest" value="${biggestDisp}"></td>
