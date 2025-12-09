@@ -504,54 +504,68 @@ function doDraw(){
 
 /* ================= ΚΑΤΑΓΡΑΦΗ ================= */
 function renderResults(){
-  const wrap=$("resultsTableWrap");
-  const d=activeDay();
+  const wrap = $("resultsTableWrap");
+  const d = activeDay();
   if(!d){
-    wrap.innerHTML='<p class="muted">Πρόσθεσε ημέρα & κλήρωση.</p>';
+    wrap.innerHTML = '<p class="muted">Πρόσθεσε ημέρα & κλήρωση.</p>';
     return;
   }
 
-  const rows=state.athletes.map(a=>({a,dd:d.draw && d.draw[a.id]}))
+  const rows = state.athletes.map(a => ({a, dd: d.draw && d.draw[a.id]}))
     .sort((x,y)=>{
-      const sx=x.dd?x.dd.sector:"";
-      const sy=y.dd?y.dd.sector:"";
-      if(sx===sy){
-        const px=x.dd?x.dd.peg:999999;
-        const py=y.dd?y.dd.peg:999999;
-        return px-py;
+      const sx = x.dd ? x.dd.sector : "";
+      const sy = y.dd ? y.dd.sector : "";
+      if(sx === sy){
+        const px = x.dd ? x.dd.peg : 999999;
+        const py = y.dd ? y.dd.peg : 999999;
+        return px - py;
       }
       return sx.localeCompare(sy);
     });
 
-  let html='<table><thead><tr>';
-  html+='<th>#</th><th>Όνομα</th><th>Σύλλογος</th><th>Τομέας</th><th>Θέση</th>';
-  html+='<th>Cat1</th><th>Cat2</th><th>Cat3</th><th>Cat4</th><th>Cat5</th>';
-  html+='<th>Σύνολο ψαριών</th><th>Β. Ποινής</th><th>Μεγ. ψάρι (g)</th><th>Κατάσταση</th>';
-  html+='</tr></thead><tbody>';
+  let html = '<table><thead><tr>';
+  html += '<th>#</th><th>Όνομα</th><th>Σύλλογος</th><th>Τομέας</th><th>Θέση</th>';
+  html += '<th>Cat1</th><th>Cat2</th><th>Cat3</th><th>Cat4</th><th>Cat5</th>';
+  html += '<th>Σύνολο ψαριών</th><th>Β. Ποινής</th><th>Μεγ. ψάρι (g)</th><th>Κατάσταση</th>';
+  html += '</tr></thead><tbody>';
 
-  if(!d.results) d.results={};
+  if(!d.results) d.results = {};
 
   rows.forEach((r,i)=>{
-    const id=r.a.id;
-    const res=d.results[id] || {cats:[0,0,0,0,0],biggest:0,status:"OK"};
-    const cats=res.cats || [0,0,0,0,0];
-    const total=cats.reduce((s,x)=>s+Number(x||0),0);
-    const penalty=cats.reduce((s,x,idx)=>s+Number(x||0)*(idx+1),0);
-    const biggest = res.biggest || 0;
+    const id = r.a.id;
 
-    html+=`<tr data-ath="${id}">
+    // Ασφαλής αρχικοποίηση χωρίς 0
+    let res = d.results[id];
+    if(!res){
+      res = {cats:[null,null,null,null,null], biggest:null, status:"OK"};
+      d.results[id] = res;
+    }
+    if(!Array.isArray(res.cats) || res.cats.length !== 5){
+      res.cats = [null,null,null,null,null];
+    }
+    if(res.status == null) res.status = "OK";
+
+    const cats = res.cats;
+    const total   = cats.reduce((s,x)=>s+Number(x||0),0);
+    const penalty = cats.reduce((s,x,idx)=>s+Number(x||0)*(idx+1),0);
+    const biggestVal  = res.biggest;
+    const biggestDisp = (biggestVal == null || biggestVal === 0 || biggestVal === "") ? "" : biggestVal;
+
+    html += `<tr data-ath="${id}">
       <td>${i+1}</td>
       <td>${safe(r.a.name)}</td>
       <td>${safe(r.a.club||"")}</td>
-      <td>${r.dd?safe(r.dd.sector):"-"}</td>
-      <td>${r.dd?safe(r.dd.peg):"-"}</td>
-      ${cats.map((v,ci)=>{
-        const disp = (v === null || v === undefined) ? "" : v;
-        return `<td><input class="field-input" type="number" min="0" data-id="${id}" data-f="cat${ci}" value="${disp}"></td>`;
-      }).join("")}
+      <td>${r.dd ? safe(r.dd.sector) : "-"}</td>
+      <td>${r.dd ? safe(r.dd.peg)    : "-"}</td>
+      ${
+        cats.map((v,ci)=>{
+          const disp = (v == null || v === "") ? "" : v;
+          return `<td><input class="field-input" type="number" min="0" data-id="${id}" data-f="cat${ci}" value="${disp}"></td>`;
+        }).join("")
+      }
       <td data-role="totalFish">${total}</td>
       <td data-role="penalty">${penalty}</td>
-      <td><input class="field-input" type="number" min="0" data-id="${id}" data-f="biggest" value="${biggest?biggest:""}"></td>
+      <td><input class="field-input" type="number" min="0" data-id="${id}" data-f="biggest" value="${biggestDisp}"></td>
       <td>
         <select data-id="${id}" data-f="status">
           <option value="OK" ${res.status==="OK"?"selected":""}>OK</option>
@@ -562,40 +576,44 @@ function renderResults(){
     </tr>`;
   });
 
-  html+='</tbody></table>';
-  wrap.innerHTML=html;
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
 
-  // onchange = ενημέρωση state + μόνο της γραμμής (όχι όλου του πίνακα)
+  // onchange = αποθήκευση + ενημέρωση ΜΟΝΟ της γραμμής
   wrap.querySelectorAll("input,select").forEach(el=>{
-    el.onchange=()=>{
-      const d=activeDay();
+    el.onchange = ()=>{
+      const d = activeDay();
       if(!d) return;
-      const id=el.dataset.id;
-      const field=el.dataset.f;
-      if(!d.results[id]) d.results[id]={cats:[0,0,0,0,0],biggest:0,status:"OK"};
-      const obj=d.results[id];
+      const id    = el.dataset.id;
+      const field = el.dataset.f;
+
+      if(!d.results[id]){
+        d.results[id] = {cats:[null,null,null,null,null], biggest:null, status:"OK"};
+      }
+      const obj = d.results[id];
 
       if(field && field.startsWith("cat")){
-        const idx=Number(field.replace("cat",""));
-        obj.cats[idx]=Number(el.value||0);
-      }else if(field==="biggest"){
-        obj.biggest=Number(el.value||0);
-      }else if(field==="status"){
-        obj.status=el.value;
+        const idx = Number(field.replace("cat",""));
+        const val = el.value === "" ? null : Number(el.value);
+        obj.cats[idx] = val;
+      }else if(field === "biggest"){
+        obj.biggest = el.value === "" ? null : Number(el.value);
+      }else if(field === "status"){
+        obj.status = el.value;
       }
 
-      // Υπολογισμός ξανά μόνο για αυτή τη γραμμή
-      const tr=el.closest("tr");
+      // Ξαναυπολογισμός ΜΟΝΟ αυτής της γραμμής
+      const tr = el.closest("tr");
       if(tr){
         const catInputs = tr.querySelectorAll('input[data-id="'+id+'"][data-f^="cat"]');
-        let totalFish=0;
-        let penalty=0;
+        let totalFish = 0;
+        let penalty   = 0;
         catInputs.forEach(inp=>{
-          const f=inp.dataset.f;
-          const idx=Number(f.replace("cat",""));
-          const val=Number(inp.value||0);
+          const f   = inp.dataset.f;
+          const idx = Number(f.replace("cat",""));
+          const val = Number(inp.value || 0);
           totalFish += val;
-          penalty   += val*(idx+1);
+          penalty   += val * (idx+1);
         });
         const tdTotal = tr.querySelector('td[data-role="totalFish"]');
         const tdPen   = tr.querySelector('td[data-role="penalty"]');
@@ -604,11 +622,10 @@ function renderResults(){
       }
 
       save();
-      renderScores(); // ανανέωση βαθμολογιών, όχι του πίνακα καταγραφής
+      renderScores(); // ανανεώνουμε μόνο τις βαθμολογίες, όχι τον πίνακα καταγραφής
     };
   });
 }
-
 /* ================= ΥΠΟΛΟΓΙΣΜΟΙ ================= */
 function computeDayRows(dayId){
   const d=state.days.find(x=>x.id===dayId);
