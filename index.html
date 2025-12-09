@@ -155,7 +155,6 @@
     box-sizing:border-box;
   }
 
-  /* Προσπάθεια κρύψιμο βελακίων στα field-input (στα περισσότερα browsers) */
   .field-input[type=number]::-webkit-inner-spin-button,
   .field-input[type=number]::-webkit-outer-spin-button{
     -webkit-appearance:none;
@@ -332,9 +331,9 @@ let state = {
   activeDayId: null
 };
 
-function save(){localStorage.setItem("fishing_katheti_v1",JSON.stringify(state));}
+function save(){localStorage.setItem("fishing_katheti_v3",JSON.stringify(state));}
 function load(){
-  const raw=localStorage.getItem("fishing_katheti_v1");
+  const raw=localStorage.getItem("fishing_katheti_v3");
   if(!raw) return false;
   state = JSON.parse(raw);
   return true;
@@ -506,16 +505,16 @@ function doDraw(){
 function renderResults(){
   const wrap = $("resultsTableWrap");
   const d = activeDay();
-  if (!d) {
-    wrap.innerHTML = '<p class="muted">Πρόσθεσε ημέρα & κλήρωση.</p>';
+  if (!d){
+    wrap.innerHTML='<p class="muted">Πρόσθεσε ημέρα & κλήρωση.</p>';
     return;
   }
 
-  const rows = state.athletes.map(a => ({ a, dd: d.draw && d.draw[a.id] }))
-    .sort((x, y) => {
+  const rows = state.athletes.map(a=>({a,dd:d.draw && d.draw[a.id]}))
+    .sort((x,y)=>{
       const sx = x.dd ? x.dd.sector : "";
       const sy = y.dd ? y.dd.sector : "";
-      if (sx === sy) {
+      if(sx===sy){
         const px = x.dd ? x.dd.peg : 999999;
         const py = y.dd ? y.dd.peg : 999999;
         return px - py;
@@ -529,37 +528,36 @@ function renderResults(){
   html += '<th>Σύνολο ψαριών</th><th>Β. Ποινής</th><th>Μεγ. ψάρι (g)</th><th>Κατάσταση</th>';
   html += '</tr></thead><tbody>';
 
-  if (!d.results) d.results = {};
+  if(!d.results) d.results = {};
 
-  rows.forEach((r, i) => {
+  rows.forEach((r,i)=>{
     const id = r.a.id;
 
-    // Ασφαλής αρχικοποίηση ΧΩΡΙΣ 0
     let res = d.results[id];
-    if (!res) {
-      res = { cats: [null, null, null, null, null], biggest: null, status: "OK" };
-      d.results[id] = res;
+    if(!res){
+      res = {cats:[null,null,null,null,null], biggest:null, status:"OK"};
+      d.results[id]=res;
     }
-    if (!Array.isArray(res.cats) || res.cats.length !== 5) {
-      res.cats = [null, null, null, null, null];
+    if(!Array.isArray(res.cats) || res.cats.length!==5){
+      res.cats=[null,null,null,null,null];
     }
-    if (res.status == null) res.status = "OK";
+    if(res.status==null) res.status="OK";
 
     const cats = res.cats;
-    const total   = cats.reduce((s, x) => s + Number(x || 0), 0);
-    const penalty = cats.reduce((s, x, idx) => s + Number(x || 0) * (idx + 1), 0);
+    const total   = cats.reduce((s,x)=>s+Number(x||0),0);
+    const penalty = cats.reduce((s,x,idx)=>s+Number(x||0)*(idx+1),0);
     const biggestVal  = res.biggest;
-    const biggestDisp = (biggestVal == null || biggestVal === "") ? "" : biggestVal;
+    const biggestDisp = (biggestVal==null || biggestVal==="") ? "" : biggestVal;
 
     html += `<tr>
-      <td>${i + 1}</td>
+      <td>${i+1}</td>
       <td>${safe(r.a.name)}</td>
-      <td>${safe(r.a.club || "")}</td>
+      <td>${safe(r.a.club||"")}</td>
       <td>${r.dd ? safe(r.dd.sector) : "-"}</td>
       <td>${r.dd ? safe(r.dd.peg) : "-"}</td>
       ${
-        cats.map((v, ci) => {
-          const disp = (v == null || v === "") ? "" : v;
+        cats.map((v,ci)=>{
+          const disp = (v==null || v==="") ? "" : v;
           return `<td><input class="field-input" type="number" min="0" data-id="${id}" data-f="cat${ci}" value="${disp}"></td>`;
         }).join("")
       }
@@ -579,32 +577,32 @@ function renderResults(){
   html += '</tbody></table>';
   wrap.innerHTML = html;
 
-  // onchange: αποθήκευση στο state + ξαναφτιάχνουμε τον πίνακα
-  wrap.querySelectorAll("input,select").forEach(el => {
-    el.onchange = () => {
+  // onchange: γράφουμε στο state, ξαναφτιάχνουμε πίνακα & βαθμολογίες
+  wrap.querySelectorAll("input,select").forEach(el=>{
+    el.onchange = ()=>{
       const d = activeDay();
-      if (!d) return;
+      if(!d) return;
       const id    = el.dataset.id;
       const field = el.dataset.f;
 
-      if (!d.results[id]) {
-        d.results[id] = { cats: [null, null, null, null, null], biggest: null, status: "OK" };
+      if(!d.results[id]){
+        d.results[id]={cats:[null,null,null,null,null],biggest:null,status:"OK"};
       }
       const obj = d.results[id];
 
-      if (field && field.startsWith("cat")) {
-        const idx = Number(field.replace("cat", ""));
-        const val = el.value === "" ? null : Number(el.value);
-        obj.cats[idx] = val;
-      } else if (field === "biggest") {
-        obj.biggest = el.value === "" ? null : Number(el.value);
-      } else if (field === "status") {
+      if(field && field.startsWith("cat")){
+        const idx = Number(field.replace("cat",""));
+        const val = el.value==="" ? null : Number(el.value);
+        obj.cats[idx]=val;
+      }else if(field==="biggest"){
+        obj.biggest = el.value==="" ? null : Number(el.value);
+      }else if(field==="status"){
         obj.status = el.value;
       }
 
       save();
-      renderResults(); // ξαναφτιάχνουμε ΠΛΗΡΩΣ τον πίνακα με τις νέες τιμές
-      renderScores();  // και ενημερώνουμε τις βαθμολογίες
+      renderResults(); // οι νέες τιμές ξαναμπαίνουν στα value=""
+      renderScores();
     };
   });
 }
@@ -619,8 +617,8 @@ function computeDayRows(dayId){
     const dd=d.draw && d.draw[a.id];
     if(!dd) return;
 
-    const res=(d.results && d.results[a.id]) || {cats:[0,0,0,0,0],biggest:0,status:"OK"};
-    const cats=res.cats||[0,0,0,0,0];
+    const res=(d.results && d.results[a.id]) || {cats:[null,null,null,null,null],biggest:null,status:"OK"};
+    const cats=res.cats||[null,null,null,null,null];
     const totalFish=cats.reduce((s,x)=>s+Number(x||0),0);
     let penalty=cats.reduce((s,x,idx)=>s+Number(x||0)*(idx+1),0);
     let biggest=Number(res.biggest||0);
@@ -1008,9 +1006,9 @@ function bindEvents(){
   };
 
   $("saveStateBtn").onclick=()=>{save();alert("Αποθηκεύτηκε στον browser.");};
-  $("loadStateBtn").onclick=()=>{if(load()) renderAll(); else alert("Δεν βρέθηκαν αποθηκευμένα δεδομένα.");};
+  $("loadStateBtn").onclick=()=>{if(load()) renderAll(); else alert("Δεν βρέθηκαν αποθηκευμένα δεδομένα (για αυτή την έκδοση).");};
   $("resetBtn").onclick=()=>{
-    if(confirm("Σίγουρα να γίνει μηδενισμός;")){localStorage.removeItem("fishing_katheti_v1"); location.reload();}
+    if(confirm("Σίγουρα να γίνει μηδενισμός;")){localStorage.removeItem("fishing_katheti_v3"); location.reload();}
   };
 }
 
