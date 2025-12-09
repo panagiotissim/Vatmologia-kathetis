@@ -545,9 +545,9 @@ function renderResults(){
       <td>${r.dd?safe(r.dd.sector):"-"}</td>
       <td>${r.dd?safe(r.dd.peg):"-"}</td>
       ${cats.map((v,ci)=>{
-        const disp = v ? v : "";
-        return `<td><input class="field-input" type="number" min="0" data-id="${id}" data-f="cat${ci}" value="${disp}"></td>`;
-      }).join("")}
+  const disp = (v === null || v === undefined) ? "" : v;
+  return `<td><input class="field-input" type="number" min="0" data-id="${id}" data-f="cat${ci}" value="${disp}"></td>`;
+}).join("")}
       <td>${total}</td>
       <td>${penalty}</td>
       <td><input class="field-input" type="number" min="0" data-id="${id}" data-f="biggest" value="${res.biggest?res.biggest:""}"></td>
