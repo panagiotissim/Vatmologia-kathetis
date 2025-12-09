@@ -583,16 +583,15 @@ function renderResults(){
               data-f="cat${ci}"
               value="${disp}"
             >
-            <div class="cat-mirror" data-id="${id}" data-i="${ci}"
-                 style="margin-top:2px;font-size:11px;color:#facc15;">
-              ${disp!=="" ? "τιμή: "+disp : ""}
-            </div>
           </td>`;
         }).join("")
       }
       <td data-role="totalFish">${total}</td>
       <td data-role="penalty">${penalty}</td>
-      <td><input class="field-input" type="number" min="0" data-id="${id}" data-f="biggest" value="${biggestDisp}"></td>
+      <td>
+        <input class="field-input" type="number" min="0"
+               data-id="${id}" data-f="biggest" value="${biggestDisp}">
+      </td>
       <td>
         <select data-id="${id}" data-f="status">
           <option value="OK" ${res.status==="OK"?"selected":""}>OK</option>
@@ -606,7 +605,7 @@ function renderResults(){
   html += '</tbody></table>';
   wrap.innerHTML = html;
 
-  // ΜΕΓΑΛΥΤΕΡΟ ΨΑΡΙ
+  // Μεγαλύτερο ψάρι
   wrap.querySelectorAll("input.field-input[data-f='biggest']").forEach(el=>{
     el.addEventListener("input", ()=>{
       const d = activeDay();
@@ -620,7 +619,7 @@ function renderResults(){
     });
   });
 
-  // ΚΑΤΗΓΟΡΙΕΣ Cat1–Cat5
+  // Κατηγορίες Cat1–Cat5
   wrap.querySelectorAll("input.field-input[data-f^='cat']").forEach(el=>{
     el.addEventListener("input", ()=>{
       const d = activeDay();
@@ -653,15 +652,6 @@ function renderResults(){
         const tdPen   = tr.querySelector('td[data-role="penalty"]');
         if(tdTotal) tdTotal.textContent = totalFish;
         if(tdPen)   tdPen.textContent   = penalty;
-      }
-
-      // 🔔 Ενημέρωση του κίτρινου κειμένου κάτω από το κουτάκι
-      const mirror = wrap.querySelector(
-        ".cat-mirror[data-id='"+id+"'][data-i='"+idx+"']"
-      );
-      if(mirror){
-        const txt = el.value.trim();
-        mirror.textContent = txt!=="" ? ("τιμή: "+txt) : "";
       }
 
       save();
