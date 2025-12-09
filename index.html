@@ -506,16 +506,16 @@ function doDraw(){
 function renderResults(){
   const wrap = $("resultsTableWrap");
   const d = activeDay();
-  if(!d){
+  if (!d) {
     wrap.innerHTML = '<p class="muted">Πρόσθεσε ημέρα & κλήρωση.</p>';
     return;
   }
 
-  const rows = state.athletes.map(a => ({a, dd: d.draw && d.draw[a.id]}))
-    .sort((x,y)=>{
+  const rows = state.athletes.map(a => ({ a, dd: d.draw && d.draw[a.id] }))
+    .sort((x, y) => {
       const sx = x.dd ? x.dd.sector : "";
       const sy = y.dd ? y.dd.sector : "";
-      if(sx === sy){
+      if (sx === sy) {
         const px = x.dd ? x.dd.peg : 999999;
         const py = y.dd ? y.dd.peg : 999999;
         return px - py;
@@ -529,42 +529,42 @@ function renderResults(){
   html += '<th>Σύνολο ψαριών</th><th>Β. Ποινής</th><th>Μεγ. ψάρι (g)</th><th>Κατάσταση</th>';
   html += '</tr></thead><tbody>';
 
-  if(!d.results) d.results = {};
+  if (!d.results) d.results = {};
 
-  rows.forEach((r,i)=>{
+  rows.forEach((r, i) => {
     const id = r.a.id;
 
-    // Ασφαλής αρχικοποίηση χωρίς 0
+    // Ασφαλής αρχικοποίηση ΧΩΡΙΣ 0
     let res = d.results[id];
-    if(!res){
-      res = {cats:[null,null,null,null,null], biggest:null, status:"OK"};
+    if (!res) {
+      res = { cats: [null, null, null, null, null], biggest: null, status: "OK" };
       d.results[id] = res;
     }
-    if(!Array.isArray(res.cats) || res.cats.length !== 5){
-      res.cats = [null,null,null,null,null];
+    if (!Array.isArray(res.cats) || res.cats.length !== 5) {
+      res.cats = [null, null, null, null, null];
     }
-    if(res.status == null) res.status = "OK";
+    if (res.status == null) res.status = "OK";
 
     const cats = res.cats;
-    const total   = cats.reduce((s,x)=>s+Number(x||0),0);
-    const penalty = cats.reduce((s,x,idx)=>s+Number(x||0)*(idx+1),0);
+    const total   = cats.reduce((s, x) => s + Number(x || 0), 0);
+    const penalty = cats.reduce((s, x, idx) => s + Number(x || 0) * (idx + 1), 0);
     const biggestVal  = res.biggest;
-    const biggestDisp = (biggestVal == null || biggestVal === 0 || biggestVal === "") ? "" : biggestVal;
+    const biggestDisp = (biggestVal == null || biggestVal === "") ? "" : biggestVal;
 
-    html += `<tr data-ath="${id}">
-      <td>${i+1}</td>
+    html += `<tr>
+      <td>${i + 1}</td>
       <td>${safe(r.a.name)}</td>
-      <td>${safe(r.a.club||"")}</td>
+      <td>${safe(r.a.club || "")}</td>
       <td>${r.dd ? safe(r.dd.sector) : "-"}</td>
-      <td>${r.dd ? safe(r.dd.peg)    : "-"}</td>
+      <td>${r.dd ? safe(r.dd.peg) : "-"}</td>
       ${
-        cats.map((v,ci)=>{
+        cats.map((v, ci) => {
           const disp = (v == null || v === "") ? "" : v;
           return `<td><input class="field-input" type="number" min="0" data-id="${id}" data-f="cat${ci}" value="${disp}"></td>`;
         }).join("")
       }
-      <td data-role="totalFish">${total}</td>
-      <td data-role="penalty">${penalty}</td>
+      <td>${total}</td>
+      <td>${penalty}</td>
       <td><input class="field-input" type="number" min="0" data-id="${id}" data-f="biggest" value="${biggestDisp}"></td>
       <td>
         <select data-id="${id}" data-f="status">
@@ -579,53 +579,36 @@ function renderResults(){
   html += '</tbody></table>';
   wrap.innerHTML = html;
 
-  // onchange = αποθήκευση + ενημέρωση ΜΟΝΟ της γραμμής
-  wrap.querySelectorAll("input,select").forEach(el=>{
-    el.onchange = ()=>{
+  // onchange: αποθήκευση στο state + ξαναφτιάχνουμε τον πίνακα
+  wrap.querySelectorAll("input,select").forEach(el => {
+    el.onchange = () => {
       const d = activeDay();
-      if(!d) return;
+      if (!d) return;
       const id    = el.dataset.id;
       const field = el.dataset.f;
 
-      if(!d.results[id]){
-        d.results[id] = {cats:[null,null,null,null,null], biggest:null, status:"OK"};
+      if (!d.results[id]) {
+        d.results[id] = { cats: [null, null, null, null, null], biggest: null, status: "OK" };
       }
       const obj = d.results[id];
 
-      if(field && field.startsWith("cat")){
-        const idx = Number(field.replace("cat",""));
+      if (field && field.startsWith("cat")) {
+        const idx = Number(field.replace("cat", ""));
         const val = el.value === "" ? null : Number(el.value);
         obj.cats[idx] = val;
-      }else if(field === "biggest"){
+      } else if (field === "biggest") {
         obj.biggest = el.value === "" ? null : Number(el.value);
-      }else if(field === "status"){
+      } else if (field === "status") {
         obj.status = el.value;
       }
 
-      // Ξαναυπολογισμός ΜΟΝΟ αυτής της γραμμής
-      const tr = el.closest("tr");
-      if(tr){
-        const catInputs = tr.querySelectorAll('input[data-id="'+id+'"][data-f^="cat"]');
-        let totalFish = 0;
-        let penalty   = 0;
-        catInputs.forEach(inp=>{
-          const f   = inp.dataset.f;
-          const idx = Number(f.replace("cat",""));
-          const val = Number(inp.value || 0);
-          totalFish += val;
-          penalty   += val * (idx+1);
-        });
-        const tdTotal = tr.querySelector('td[data-role="totalFish"]');
-        const tdPen   = tr.querySelector('td[data-role="penalty"]');
-        if(tdTotal) tdTotal.textContent = totalFish;
-        if(tdPen)   tdPen.textContent   = penalty;
-      }
-
       save();
-      renderScores(); // ανανεώνουμε μόνο τις βαθμολογίες, όχι τον πίνακα καταγραφής
+      renderResults(); // ξαναφτιάχνουμε ΠΛΗΡΩΣ τον πίνακα με τις νέες τιμές
+      renderScores();  // και ενημερώνουμε τις βαθμολογίες
     };
   });
 }
+
 /* ================= ΥΠΟΛΟΓΙΣΜΟΙ ================= */
 function computeDayRows(dayId){
   const d=state.days.find(x=>x.id===dayId);
