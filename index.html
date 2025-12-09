@@ -555,24 +555,21 @@ function renderResults(){
       <td>${safe(r.a.club||"")}</td>
       <td>${r.dd ? safe(r.dd.sector) : "-"}</td>
       <td>${r.dd ? safe(r.dd.peg) : "-"}</td>
-     ${
-  cats.map((v,ci)=>{
-    const disp = (v==null || v==="") ? "" : v;
-    return `<td>
-      <input
-        class="field-input"
-        type="text"
-        inputmode="numeric"
-        pattern="[0-9]*"
-        data-id="${id}"
-        data-f="cat${ci}"
-        value="${disp}"
-        style="background:#ffffff !important;color:#000000 !important;font-size:18px !important;"
-      >
-    </td>`;
-  }).join("")
-}
-
+      ${
+        cats.map((v,ci)=>{
+          const disp = (v==null || v==="") ? "" : v;
+          // 🔥 Χρησιμοποιούμε contenteditable div αντί για input
+          return `<td>
+            <div
+              class="field-input cat-cell"
+              contenteditable="true"
+              data-id="${id}"
+              data-f="cat${ci}"
+              style="background:#ffffff;color:#000000;font-size:18px;"
+            >${disp}</div>
+          </td>`;
+        }).join("")
+      }
       <td data-role="totalFish">${total}</td>
       <td data-role="penalty">${penalty}</td>
       <td><input class="field-input" type="number" min="0" data-id="${id}" data-f="biggest" value="${biggestDisp}"></td>
@@ -589,57 +586,63 @@ function renderResults(){
   html += '</tbody></table>';
   wrap.innerHTML = html;
 
-  // 🔹 ΕΔΩ: δεν ξαναχτίζουμε τον πίνακα. Μόνο ενημερώνουμε την ίδια γραμμή.
-  wrap.querySelectorAll("input.field-input").forEach(el=>{
-    if(el.dataset.f === "biggest"){
-      el.addEventListener("input", ()=>{
-        const d = activeDay();
-        if(!d) return;
-        const id    = el.dataset.id;
-        if(!d.results[id]) d.results[id]={cats:[null,null,null,null,null],biggest:null,status:"OK"};
-        const obj = d.results[id];
-        obj.biggest = el.value==="" ? null : Number(el.value);
-        save();
-        renderScores();
-      });
-    }else{
-      // Cat1–Cat5: ενημέρωση state + υπολογισμός γραμμής
-      el.addEventListener("input", ()=>{
-        const d = activeDay();
-        if(!d) return;
-        const id    = el.dataset.id;
-        const field = el.dataset.f;
-        if(!d.results[id]) d.results[id]={cats:[null,null,null,null,null],biggest:null,status:"OK"};
-        const obj = d.results[id];
-        const idx = Number(field.replace("cat",""));
-        const val = el.value==="" ? 0 : Number(el.value);
-        obj.cats[idx] = val;
-
-        const tr = el.closest("tr");
-        if(tr){
-          const catInputs = tr.querySelectorAll('input.field-input[data-id="'+id+'"][data-f^="cat"]');
-          let totalFish = 0;
-          let penalty   = 0;
-          catInputs.forEach(inp=>{
-            const f   = inp.dataset.f;
-            const i   = Number(f.replace("cat",""));
-            const v   = Number(inp.value||0);
-            totalFish += v;
-            penalty   += v*(i+1);
-          });
-          const tdTotal = tr.querySelector('td[data-role="totalFish"]');
-          const tdPen   = tr.querySelector('td[data-role="penalty"]');
-          if(tdTotal) tdTotal.textContent = totalFish;
-          if(tdPen)   tdPen.textContent   = penalty;
-        }
-
-        save();
-        renderScores();
-      });
-    }
+  // 🔹 handler για ΜΕΓΑΛΥΤΕΡΟ ΨΑΡΙ (μένει όπως πριν, είναι input number)
+  wrap.querySelectorAll("input.field-input[data-f='biggest']").forEach(el=>{
+    el.addEventListener("input", ()=>{
+      const d = activeDay();
+      if(!d) return;
+      const id    = el.dataset.id;
+      if(!d.results[id]) d.results[id]={cats:[null,null,null,null,null],biggest:null,status:"OK"};
+      const obj = d.results[id];
+      obj.biggest = el.value==="" ? null : Number(el.value);
+      save();
+      renderScores();
+    });
   });
 
-  // Κατάσταση (OK/DQ/NS)
+  // 🔹 handlers για ΚΑΤΗΓΟΡΙΕΣ (Cat1–Cat5) — τώρα είναι contenteditable divs
+  wrap.querySelectorAll(".cat-cell").forEach(div=>{
+    div.addEventListener("input", ()=>{
+      const d = activeDay();
+      if(!d) return;
+      const id    = div.dataset.id;
+      const field = div.dataset.f;
+      if(!d.results[id]) d.results[id]={cats:[null,null,null,null,null],biggest:null,status:"OK"};
+      const obj = d.results[id];
+
+      const idx = Number(field.replace("cat",""));
+      const txt = div.textContent.trim();
+      const val = txt==="" ? 0 : Number(txt.replace(",","."));
+      obj.cats[idx] = isNaN(val) ? 0 : val;
+
+      // Υπολογισμός ΜΟΝΟ για τη συγκεκριμένη γραμμή
+      const tr = div.closest("tr");
+      if(tr){
+        const catDivs = tr.querySelectorAll(".cat-cell[data-id='"+id+"']");
+        let totalFish = 0;
+        let penalty   = 0;
+        catDivs.forEach(cd=>{
+          const f   = cd.dataset.f;
+          const i   = Number(f.replace("cat",""));
+          const t   = cd.textContent.trim();
+          const v   = t==="" ? 0 : Number(t.replace(",","."));
+          if(!isNaN(v)){
+            totalFish += v;
+            penalty   += v*(i+1);
+          }
+        });
+        const tdTotal = tr.querySelector('td[data-role="totalFish"]');
+        const tdPen   = tr.querySelector('td[data-role="penalty"]');
+        if(tdTotal) tdTotal.textContent = totalFish;
+        if(tdPen)   tdPen.textContent   = penalty;
+      }
+
+      save();
+      renderScores();
+    });
+  });
+
+  // 🔹 Κατάσταση (OK/DQ/NS)
   wrap.querySelectorAll("select[data-f='status']").forEach(sel=>{
     sel.addEventListener("change", ()=>{
       const d = activeDay();
