@@ -457,24 +457,25 @@ function renderResults(){
   wrap.innerHTML=html;
 
   wrap.querySelectorAll("input,select").forEach(el=>{
-    el.oninput=()=>{
-      const id=el.dataset.id;
-      const field=el.dataset.f;
-      if(!d.results[id]) d.results[id]={cats:[0,0,0,0,0],biggest:0,status:"OK"};
-      const obj=d.results[id];
-      if(field.startsWith("cat")){
-        const idx=Number(field.replace("cat",""));
-        obj.cats[idx]=Number(el.value||0);
-      }else if(field==="biggest"){
-        obj.biggest=Number(el.value||0);
-      }else if(field==="status"){
-        obj.status=el.value;
-      }
-      save();
-      renderResults();
-      renderScores();
-    };
-  });
+  el.onchange=()=>{
+    const id=el.dataset.id;
+    const field=el.dataset.f;
+    if(!d.results[id]) d.results[id]={cats:[0,0,0,0,0],biggest:0,status:"OK"};
+    const obj=d.results[id];
+    if(field.startsWith("cat")){
+      const idx=Number(field.replace("cat",""));
+      obj.cats[idx]=Number(el.value||0);
+    }else if(field==="biggest"){
+      obj.biggest=Number(el.value||0);
+    }else if(field==="status"){
+      obj.status=el.value;
+    }
+    save();
+    renderResults();
+    renderScores();
+  };
+});
+
 }
 
 function computeDayRows(dayId){
