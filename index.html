@@ -27,14 +27,6 @@
     font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
   }
 
-  /* Κρύβουμε τα βελάκια από τα number inputs */
-  input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button{
-    -webkit-appearance:none;
-    margin:0;
-  }
-  input[type=number]{ -moz-appearance:textfield; }
-
   header{
     padding:16px;
     border-bottom:1px solid var(--line);
@@ -95,16 +87,14 @@
 
   label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;}
 
-  /* ΜΕΓΑΛΑ κουτάκια για input / select / button */
   input,select,button{
     width:100%;
-    padding:14px 16px;
-    border-radius:12px;
+    padding:10px;
+    border-radius:10px;
     border:1px solid #273244;
     background:#020617;
     color:var(--ink);
-    font-size:16px;
-    min-height:48px;
+    font-size:14px;
   }
 
   button.primary{background:var(--accent);color:#052e16;border-color:transparent;font-weight:600;cursor:pointer;}
@@ -150,6 +140,30 @@
 
   @media (max-width:900px){
     .row{flex-direction:column;}
+  }
+
+  /* 🔥 Μεγάλα κουτάκια ΕΙΔΙΚΑ για την καταγραφή */
+  .field-input{
+    width:100%;
+    padding:14px 16px;
+    border-radius:12px;
+    border:1px solid #273244;
+    background:#020617;
+    color:var(--ink);
+    font-size:16px;
+    min-height:48px;
+    box-sizing:border-box;
+  }
+
+  /* Προσπάθεια κρύψιμο βελακίων στα field-input (στα περισσότερα browsers) */
+  .field-input[type=number]::-webkit-inner-spin-button,
+  .field-input[type=number]::-webkit-outer-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+  }
+  .field-input[type=number]{
+    -moz-appearance:textfield;
+    appearance:textfield;
   }
 </style>
 </head>
@@ -299,6 +313,7 @@
     </div>
   </section>
 </div>
+
 <script>
 /* ================= ΒΟΗΘΗΤΙΚΑ ================= */
 function $(id){return document.getElementById(id);}
@@ -446,7 +461,6 @@ function doDraw(){
   const clubInSec=new Map(sectors.map(s=>[s,new Set()]));
   const filled=new Map(sectors.map(s=>[s,0]));
 
-  // Ομαδοποίηση ανά σύλλογο
   const byClub=new Map();
   state.athletes.forEach(a=>{
     const c=(a.club||"-").trim()||"-";
@@ -532,11 +546,11 @@ function renderResults(){
       <td>${r.dd?safe(r.dd.peg):"-"}</td>
       ${cats.map((v,ci)=>{
         const disp = v ? v : "";
-        return `<td><input type="number" min="0" data-id="${id}" data-f="cat${ci}" value="${disp}"></td>`;
+        return `<td><input class="field-input" type="number" min="0" data-id="${id}" data-f="cat${ci}" value="${disp}"></td>`;
       }).join("")}
       <td>${total}</td>
       <td>${penalty}</td>
-      <td><input type="number" min="0" data-id="${id}" data-f="biggest" value="${res.biggest?res.biggest:""}"></td>
+      <td><input class="field-input" type="number" min="0" data-id="${id}" data-f="biggest" value="${res.biggest?res.biggest:""}"></td>
       <td>
         <select data-id="${id}" data-f="status">
           <option value="OK" ${res.status==="OK"?"selected":""}>OK</option>
@@ -550,7 +564,6 @@ function renderResults(){
   html+='</tbody></table>';
   wrap.innerHTML=html;
 
-  // 🔥 onchange ώστε να προλαβαίνεις να γράφεις πολλά ψηφία
   wrap.querySelectorAll("input,select").forEach(el=>{
     el.onchange=()=>{
       const id=el.dataset.id;
@@ -673,7 +686,7 @@ function computeTeamAggregate(){
 
   const teams=[];
   byClub.forEach((list,club)=>{
-    if(list.length<2) return; // τουλάχιστον 2 αθλητές
+    if(list.length<2) return;
 
     list.sort((a,b)=>{
       return (b.totalPenalty-a.totalPenalty) ||
@@ -722,7 +735,6 @@ function renderScores(){
   tabs.innerHTML=""; area.innerHTML="";
   let firstClicked=false;
 
-  // Καρτέλες για ΟΛΕΣ τις ημέρες (ατομικό)
   state.days.forEach((d,idx)=>{
     const b=document.createElement("button");
     b.className="pill";
@@ -753,7 +765,6 @@ function renderScores(){
     if(!firstClicked){ b.click(); firstClicked=true; }
   });
 
-  // Συνολικό ατομικό
   const bAgg=document.createElement("button");
   bAgg.className="pill";
   bAgg.textContent="Συνολικό Ατομικό (άθροισμα Β. Ποινής)";
@@ -778,7 +789,6 @@ function renderScores(){
   tabs.appendChild(bAgg);
   if(!firstClicked){ bAgg.click(); firstClicked=true; }
 
-  // Ομαδικό (2 καλύτεροι)
   const bTeam=document.createElement("button");
   bTeam.className="pill";
   bTeam.textContent="Ομαδικό (2 καλύτεροι ανά σύλλογο)";
