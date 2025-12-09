@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Αθλητική Αλιεία — Βαθμοί Ποινής</title>
+<title>Αθλητική Αλιεία - Καθετή</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root {
@@ -100,18 +100,17 @@
 </head>
 <body>
 <header>
-  <h1>🎣 Αθλητική Αλιεία — Σύστημα Βαθμών Ποινής</h1>
+  <h1>🎣 Αθλητική Αλιεία - Καθετή</h1>
   <nav id="topNav">
     <button data-page="p-participants" class="active">Συμμετέχοντες</button>
     <button data-page="p-draw">Ημέρες & Κλήρωση</button>
     <button data-page="p-entry">Καταγραφή</button>
     <button data-page="p-scores">Βαθμολογίες</button>
-    <button data-page="p-settings">Ρυθμίσεις</button>
   </nav>
 </header>
 
 <div class="wrap">
-  <!-- ΣΥΜΜΕΤΕΧΟΝΤΕΣ -->
+  <!-- ΣΥΜΜΕΤΕΧΟΝΤΕΣ + ΡΥΘΜΙΣΕΙΣ -->
   <section id="p-participants" class="page">
     <div class="card">
       <h2>Συμμετέχοντες</h2>
@@ -125,12 +124,35 @@
       </div>
       <div class="row" style="margin-top:8px">
         <button class="primary" id="addAthleteBtn">➕ Προσθήκη</button>
-        <button class="ghost" id="bulkBtn">📥 Μαζική εισαγωγή</button>
+        <!-- Βγάλαμε το κουμπί μαζική εισαγωγή -->
         <input id="excelInput" type="file" accept=".xlsx,.xls,.csv" style="display:none">
         <button class="warn" id="excelBtn">🗂️ Εισαγωγή από Excel</button>
       </div>
       <div class="small muted" style="margin-top:4px">
-        CSV/clipboard: <code>Όνομα, Σύλλογος, Αρ. Μητρώου, Χορηγός</code>
+        Excel/CSV: στήλες <code>Όνομα, Σύλλογος, Αρ. Μητρώου, Χορηγός</code>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Ρυθμίσεις</h2>
+      <div class="row">
+        <div>
+          <label>Όνομα διοργάνωσης</label>
+          <input id="eventName" placeholder="π.χ. Πρωτάθλημα Καθετής">
+        </div>
+        <div>
+          <label>Αριθμός τομέων για την κλήρωση</label>
+          <input id="numSectors" type="number" min="1" max="26" value="5">
+        </div>
+      </div>
+      <div class="small muted" style="margin-top:6px">
+        Κλήρωση: οι αθλητές μοιράζονται όσο γίνεται ισόποσα στους τομείς (A, B, C, ...).<br>
+        Όσο γίνεται, αθλητές της ίδιας ομάδας δεν πέφτουν στον ίδιο τομέα (αν είναι περισσότεροι από τους τομείς, λογικά θα συναντιούνται).
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-top:8px">
+        <button class="ghost" id="saveStateBtn">💾 Αποθήκευση</button>
+        <button class="ghost" id="loadStateBtn">📂 Φόρτωση</button>
+        <button class="danger" id="resetBtn">🧹 Μηδενισμός</button>
       </div>
     </div>
 
@@ -189,32 +211,6 @@
       <div class="table-wrap" id="scoreTables"></div>
     </div>
   </section>
-
-  <!-- ΡΥΘΜΙΣΕΙΣ -->
-  <section id="p-settings" class="page" style="display:none">
-    <div class="card">
-      <h2>Ρυθμίσεις</h2>
-      <div class="row">
-        <div>
-          <label>Όνομα διοργάνωσης</label>
-          <input id="eventName" placeholder="π.χ. Πρωτάθλημα Βαθμών Ποινής">
-        </div>
-        <div>
-          <label>Αριθμός τομέων για την κλήρωση</label>
-          <input id="numSectors" type="number" min="1" max="26" value="5">
-        </div>
-      </div>
-      <div class="small muted" style="margin-top:6px">
-        Κλήρωση: οι αθλητές μοιράζονται όσο γίνεται ισόποσα στους τομείς (A, B, C, ...).<br>
-        Όσο γίνεται, αθλητές της ίδιας ομάδας δεν πέφτουν στον ίδιο τομέα (αν οι αθλητές του συλλόγου είναι περισσότεροι από τους τομείς, αρχίζουν να συναντιούνται).
-      </div>
-      <div class="row" style="justify-content:flex-end;margin-top:8px">
-        <button class="ghost" id="saveStateBtn">💾 Αποθήκευση</button>
-        <button class="ghost" id="loadStateBtn">📂 Φόρτωση</button>
-        <button class="danger" id="resetBtn">🧹 Μηδενισμός</button>
-      </div>
-    </div>
-  </section>
 </div>
 
 <script>
@@ -223,7 +219,6 @@ function $(id){return document.getElementById(id);}
 function uid(){return Math.random().toString(36).slice(2,9);}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function safe(s){s = s==null ? "" : String(s); return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-function ceilDiv(a,b){return Math.ceil(a/b);}
 
 /* ============ ΚΑΤΑΣΤΑΣΗ ============ */
 let state = {
@@ -236,9 +231,9 @@ let state = {
   activeDayId: null
 };
 
-function save(){localStorage.setItem("fishing_penalty_v2",JSON.stringify(state));}
+function save(){localStorage.setItem("fishing_katheti_v1",JSON.stringify(state));}
 function load(){
-  const raw=localStorage.getItem("fishing_penalty_v2");
+  const raw=localStorage.getItem("fishing_katheti_v1");
   if(!raw) return false;
   state = JSON.parse(raw);
   return true;
@@ -257,7 +252,6 @@ function showPage(pid){
   document.querySelectorAll("#topNav button").forEach(b=>b.classList.toggle("active",b.getAttribute("data-page")===pid));
   renderAll();
 }
-
 document.getElementById("topNav").addEventListener("click",e=>{
   if(e.target.tagName==="BUTTON") showPage(e.target.dataset.page);
 });
@@ -436,16 +430,20 @@ function renderResults(){
     const cats=res.cats || [0,0,0,0,0];
     const total=cats.reduce((s,x)=>s+Number(x||0),0);
     const penalty=cats.reduce((s,x,idx)=>s+Number(x||0)*(idx+1),0);
+
     html+=`<tr>
       <td>${i+1}</td>
       <td>${safe(r.a.name)}</td>
       <td>${safe(r.a.club||"")}</td>
       <td>${r.dd?safe(r.dd.sector):"-"}</td>
       <td>${r.dd?safe(r.dd.peg):"-"}</td>
-      ${cats.map((v,ci)=>`<td><input type="number" min="0" data-id="${id}" data-f="cat${ci}" value="${v}"></td>`).join("")}
+      ${cats.map((v,ci)=>{
+        const disp = v ? v : "";
+        return `<td><input type="number" min="0" data-id="${id}" data-f="cat${ci}" value="${disp}"></td>`;
+      }).join("")}
       <td>${total}</td>
       <td>${penalty}</td>
-      <td><input type="number" min="0" data-id="${id}" data-f="biggest" value="${res.biggest||0}"></td>
+      <td><input type="number" min="0" data-id="${id}" data-f="biggest" value="${res.biggest?res.biggest:""}"></td>
       <td>
         <select data-id="${id}" data-f="status">
           <option value="OK" ${res.status==="OK"?"selected":""}>OK</option>
@@ -480,7 +478,6 @@ function renderResults(){
 }
 
 /* ============ ΥΠΟΛΟΓΙΣΜΟΙ ============ */
-// υπολογισμός γραμμών μίας ημέρας
 function computeDayRows(dayId){
   const d=state.days.find(x=>x.id===dayId);
   if(!d) return [];
@@ -494,7 +491,7 @@ function computeDayRows(dayId){
     let penalty=cats.reduce((s,x,idx)=>s+Number(x||0)*(idx+1),0);
     let biggest=Number(res.biggest||0);
     if(res.status!=="OK"){
-      // DQ/NS: τους κρατάμε τελευταίους → 0 βαθμοί ποινής
+      // DQ/NS: να είναι τελευταίοι -> 0 ποινή / 0 ψάρια
       penalty = 0;
       biggest = 0;
     }
@@ -513,7 +510,6 @@ function computeDayRows(dayId){
       status:res.status
     });
   });
-  // κατάταξη ημέρας:
   // 1) ΠΕΡΙΣΣΟΤΕΡΟΙ Β. ΠΟΙΝΗΣ ΚΑΛΥΤΕΡΑ
   // 2) περισσότερα ψάρια
   // 3) μεγαλύτερο ψάρι
@@ -526,7 +522,6 @@ function computeDayRows(dayId){
   return rows;
 }
 
-// συνολικό ατομικό: άθροισμα ποινών (μεγαλύτερο καλύτερο)
 function computeAggregate(){
   const agg=new Map();
   state.athletes.forEach(a=>{
@@ -548,13 +543,11 @@ function computeAggregate(){
       const r=byId.get(id);
       if(!r) return;
       v.totalPenalty += r.penalty;
-      // DQ/NS έχουν penalty 0, οπότε δεν ανεβάζουν τον αθροιστικό
       v.totalFish += r.totalFish;
       v.bestBiggest = Math.max(v.bestBiggest, r.biggest);
     });
   });
   const out=Array.from(agg.values());
-  // εδώ πάλι: περισσότεροι πόντοι ποινής = καλύτερη θέση
   out.sort((a,b)=>{
     return (b.totalPenalty-a.totalPenalty) ||
            (b.totalFish-a.totalFish) ||
@@ -564,7 +557,6 @@ function computeAggregate(){
   return out;
 }
 
-// ομαδικό: 2 καλύτεροι ανά σύλλογο από τη συνολική
 function computeTeamAggregate(){
   const ind=computeAggregate();
   const byClub=new Map();
@@ -576,7 +568,6 @@ function computeTeamAggregate(){
   const teams=[];
   byClub.forEach((list,club)=>{
     if(list.length<2) return;
-    // καλύτεροι = περισσότεροι συνολικοί βαθμοί ποινής
     list.sort((a,b)=>{
       return (b.totalPenalty-a.totalPenalty) ||
              (b.totalFish-a.totalFish) ||
@@ -618,13 +609,13 @@ function makeTable(rows,title,headers){
 function renderScores(){
   const tabs=$("scoreTabs"), area=$("scoreTables");
   tabs.innerHTML=""; area.innerHTML="";
-  const d=activeDay();
+  let firstClicked=false;
 
-  // ημέρα (ατομικό)
-  if(d){
+  // καρτέλες για ΟΛΕΣ τις ημέρες (ατομικό)
+  state.days.forEach((d,idx)=>{
     const b=document.createElement("button");
     b.className="pill";
-    b.textContent=`Ημέρα: ${d.name} — Ατομικό`;
+    b.textContent=`Ημέρα ${idx+1}: ${d.name||""} — Ατομικό`;
     b.onclick=()=>{
       const rows=computeDayRows(d.id);
       const out=rows.map((r,i)=>[
@@ -643,63 +634,60 @@ function renderScores(){
       ]);
       area.innerHTML=makeTable(
         out,
-        "Κατάταξη ημέρας (ΠΕΡΙΣΣΟΤΕΡΟΙ Β. ΠΟΙΝΗΣ → περισσότερα ψάρια → μεγαλύτερο ψάρι)",
+        `Κατάταξη ημέρας "${d.name}" (ΠΕΡΙΣΣΟΤΕΡΟΙ Β. ΠΟΙΝΗΣ → περισσότερα ψάρια → μεγαλύτερο ψάρι)`,
         ["#","Β. Ποινής","Σύνολο ψαριών","Μεγ. ψάρι(g)","Όνομα","Σύλλογος","Αρ. Μητρώου","Χορηγός","Τομέας","Θέση","Cat1","Cat2","Cat3","Cat4","Cat5","Κατάσταση"]
       );
     };
     tabs.appendChild(b);
-    b.click();
-  }
+    if(!firstClicked){ b.click(); firstClicked=true; }
+  });
 
   // συνολικό ατομικό
-  {
-    const b=document.createElement("button");
-    b.className="pill";
-    b.textContent="Συνολικό Ατομικό (άθροισμα Β. Ποινής)";
-    b.onclick=()=>{
-      const rows=computeAggregate();
-      const out=rows.map((r,i)=>[
-        i+1,
-        r.totalPenalty,
-        r.totalFish,
-        r.bestBiggest,
-        r.name,
-        r.club,
-        r.regNo,
-        r.sponsor
-      ]);
-      area.innerHTML=makeTable(
-        out,
-        "Συνολική Ατομική Κατάταξη (περισσότεροι συνολικοί βαθμοί ποινής καλύτερα)",
-        ["#","Σύνολο Β. Ποινής","Συνολικά ψάρια","Καλύτερο μεγ. ψάρι(g)","Όνομα","Σύλλογος","Αρ. Μητρώου","Χορηγός"]
-      );
-    };
-    tabs.appendChild(b);
-  }
+  const bAgg=document.createElement("button");
+  bAgg.className="pill";
+  bAgg.textContent="Συνολικό Ατομικό (άθροισμα Β. Ποινής)";
+  bAgg.onclick=()=>{
+    const rows=computeAggregate();
+    const out=rows.map((r,i)=>[
+      i+1,
+      r.totalPenalty,
+      r.totalFish,
+      r.bestBiggest,
+      r.name,
+      r.club,
+      r.regNo,
+      r.sponsor
+    ]);
+    area.innerHTML=makeTable(
+      out,
+      "Συνολική Ατομική Κατάταξη (περισσότεροι συνολικοί βαθμοί ποινής καλύτερα)",
+      ["#","Σύνολο Β. Ποινής","Συνολικά ψάρια","Καλύτερο μεγ. ψάρι(g)","Όνομα","Σύλλογος","Αρ. Μητρώου","Χορηγός"]
+    );
+  };
+  tabs.appendChild(bAgg);
+  if(!firstClicked){ bAgg.click(); firstClicked=true; }
 
-  // ομαδικό (2 καλύτεροι)
-  {
-    const b=document.createElement("button");
-    b.className="pill";
-    b.textContent="Ομαδικό (2 καλύτεροι ανά σύλλογο)";
-    b.onclick=()=>{
-      const teams=computeTeamAggregate();
-      const out=teams.map((t,i)=>[
-        i+1,
-        t.club,
-        t.teamPenalty,
-        t.teamFish,
-        t.teamBig,
-        t.members.join(", ")
-      ]);
-      area.innerHTML=makeTable(
-        out,
-        "Ομαδικό Πρωταθλήματος (2 καλύτεροι ανά σύλλογο, περισσότεροι βαθμοί ποινής καλύτερα)",
-        ["#","Σύλλογος","Σύνολο Β. Ποινής","Συνολικά ψάρια","Καλύτερο μεγ. ψάρι(g)","Αθλητές που μετρούν"]
-      );
-    };
-    tabs.appendChild(b);
-  }
+  // ομαδικό
+  const bTeam=document.createElement("button");
+  bTeam.className="pill";
+  bTeam.textContent="Ομαδικό (2 καλύτεροι ανά σύλλογο)";
+  bTeam.onclick=()=>{
+    const teams=computeTeamAggregate();
+    const out=teams.map((t,i)=>[
+      i+1,
+      t.club,
+      t.teamPenalty,
+      t.teamFish,
+      t.teamBig,
+      t.members.join(", ")
+    ]);
+    area.innerHTML=makeTable(
+      out,
+      "Ομαδικό Πρωταθλήματος (2 καλύτεροι ανά σύλλογο, περισσότεροι βαθμοί ποινής καλύτερα)",
+      ["#","Σύλλογος","Σύνολο Β. Ποινής","Συνολικά ψάρια","Καλύτερο μεγ. ψάρι(g)","Αθλητές που μετρούν"]
+    );
+  };
+  tabs.appendChild(bTeam);
 }
 
 /* ============ ΕΞΑΓΩΓΕΣ ============ */
@@ -839,19 +827,6 @@ function bindEvents(){
     ["athName","athClub","athReg","athSponsor"].forEach(id=>{$(id).value="";});
     save(); renderAll();
   };
-  $("bulkBtn").onclick=()=>{
-    const txt=prompt("Επικόλλησε λίστα (Όνομα[, Σύλλογος[, Αρ. Μητρώου[, Χορηγός]]]) — μία γραμμή ανά αθλητή","");
-    if(!txt)return;
-    txt.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).forEach(line=>{
-      const p=line.split(",");
-      const name=(p[0]||"").trim(); if(!name)return;
-      const club=(p[1]||"").trim();
-      const reg=(p[2]||"").trim();
-      const spo=(p[3]||"").trim();
-      state.athletes.push({id:uid(),name,club,regNo:reg,sponsor:spo});
-    });
-    save(); renderAll();
-  };
   $("excelBtn").onclick=()=>{$("excelInput").click();};
   $("excelInput").onchange=importAthletesFromFile;
 
@@ -887,7 +862,7 @@ function bindEvents(){
   $("saveStateBtn").onclick=()=>{save();alert("Αποθηκεύτηκε στον browser.");};
   $("loadStateBtn").onclick=()=>{if(load()) renderAll(); else alert("Δεν βρέθηκαν αποθηκευμένα δεδομένα.");};
   $("resetBtn").onclick=()=>{
-    if(confirm("Σίγουρα να γίνει μηδενισμός;")){localStorage.removeItem("fishing_penalty_v2"); location.reload();}
+    if(confirm("Σίγουρα να γίνει μηδενισμός;")){localStorage.removeItem("fishing_katheti_v1"); location.reload();}
   };
 }
 
