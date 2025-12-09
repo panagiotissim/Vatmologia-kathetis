@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Αθλητική Αλιεία - Καθετή</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <style>
   :root {
     --bg:#0f172a;
@@ -16,13 +17,24 @@
     --warn:#f59e0b;
     --line:#1f2937;
   }
-  *{box-sizing:border-box}
+
+  *{box-sizing:border-box;}
+
   body{
     margin:0;
     background:linear-gradient(120deg,#020617,#0f172a);
     color:var(--ink);
     font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
   }
+
+  /* Κρύβουμε τα βελάκια από τα number inputs */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+  }
+  input[type=number]{ -moz-appearance:textfield; }
+
   header{
     padding:16px;
     border-bottom:1px solid var(--line);
@@ -32,8 +44,16 @@
     top:0;
     z-index:10;
   }
-  h1{margin:0;font-size:18px}
-  nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+
+  h1{margin:0;font-size:18px;}
+
+  nav{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:8px;
+  }
+
   nav button{
     padding:10px 14px;
     border-radius:12px;
@@ -44,13 +64,20 @@
     min-height:40px;
     font-size:14px;
   }
+
   nav button.active{
     background:var(--accent);
     color:#052e16;
     border-color:transparent;
     font-weight:700;
   }
-  .wrap{max-width:1200px;margin:16px auto;padding:0 16px}
+
+  .wrap{
+    max-width:1200px;
+    margin:16px auto;
+    padding:0 16px;
+  }
+
   .card{
     background:var(--card);
     border:1px solid var(--line);
@@ -58,34 +85,36 @@
     padding:16px;
     margin-bottom:16px;
   }
-  .row{display:flex;gap:8px;flex-wrap:wrap}
-  .row>*{flex:1}
-  label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
-  input,select,button{
-  width:100%;
-  padding:10px;
-  border-radius:10px;
-  border:1px solid #273244;
-  background:#020617;
-  color:var(--ink);
-  font-size:14px;
-}
 
+  .row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
   }
-  /* κρύβουμε τα βελάκια από τα number inputs */
-  input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button{
-    -webkit-appearance:none;
-    margin:0;
+  .row>*{ flex:1; }
+
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;}
+
+  /* ΜΕΓΑΛΑ κουτάκια για input / select / button */
+  input,select,button{
+    width:100%;
+    padding:14px 16px;
+    border-radius:12px;
+    border:1px solid #273244;
+    background:#020617;
+    color:var(--ink);
+    font-size:16px;
+    min-height:48px;
   }
-  input[type=number]{
-    -moz-appearance:textfield;
-  }
-  button.primary{background:var(--accent);color:#052e16;border-color:transparent;font-weight:600;cursor:pointer}
-  button.ghost{background:#020617;cursor:pointer}
-  button.warn{background:#f59e0b;color:#111827;border-color:transparent;cursor:pointer}
-  button.danger{background:#ef4444;color:#fff;border-color:transparent;cursor:pointer}
-  .muted{color:var(--muted)} .small{font-size:12px}
+
+  button.primary{background:var(--accent);color:#052e16;border-color:transparent;font-weight:600;cursor:pointer;}
+  button.ghost{background:#020617;cursor:pointer;}
+  button.warn{background:#f59e0b;color:#111827;border-color:transparent;}
+  button.danger{background:#ef4444;color:#fff;border-color:transparent;}
+
+  .muted{color:var(--muted);}
+  .small{font-size:12px;}
+
   .pill{
     display:inline-block;
     padding:5px 9px;
@@ -95,7 +124,13 @@
     font-size:11px;
     margin:2px 4px 0 0;
   }
-  table{width:100%;border-collapse:collapse;margin-top:8px}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:8px;
+  }
+
   th,td{
     border-bottom:1px solid var(--line);
     padding:6px 8px;
@@ -103,13 +138,24 @@
     white-space:nowrap;
     font-size:12px;
   }
-  th{color:var(--muted);font-weight:600}
-  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .table-wrap table{min-width:900px}
-  @media (max-width:900px){ .row{flex-direction:column} }
+
+  th{color:var(--muted);font-weight:600;}
+
+  .table-wrap{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .table-wrap table{min-width:900px;}
+
+  @media (max-width:900px){
+    .row{flex-direction:column;}
+  }
 </style>
 </head>
+
 <body>
+
 <header>
   <h1>🎣 Αθλητική Αλιεία - Καθετή</h1>
   <nav id="topNav">
@@ -120,24 +166,41 @@
   </nav>
 </header>
 
+
 <div class="wrap">
-  <!-- ΣΥΜΜΕΤΕΧΟΝΤΕΣ + ΡΥΘΜΙΣΕΙΣ -->
+  <!-- --- ΣΕΛΙΔΑ ΣΥΜΜΕΤΕΧΟΝΤΩΝ --- -->
   <section id="p-participants" class="page">
     <div class="card">
       <h2>Συμμετέχοντες</h2>
+
       <div class="row">
-        <div><label>Ονοματεπώνυμο</label><input id="athName" placeholder="π.χ. Νίκος Παπαδόπουλος"></div>
-        <div><label>Σύλλογος</label><input id="athClub" placeholder="π.χ. Ν.Ο. Πόλης"></div>
+        <div>
+          <label>Ονοματεπώνυμο</label>
+          <input id="athName" placeholder="π.χ. Νίκος Παπαδόπουλος">
+        </div>
+        <div>
+          <label>Σύλλογος</label>
+          <input id="athClub" placeholder="π.χ. Ν.Ο. Πόλης">
+        </div>
       </div>
+
       <div class="row" style="margin-top:8px">
-        <div><label>Αρ. Μητρώου</label><input id="athReg" placeholder="π.χ. 12345"></div>
-        <div><label>Χορηγός</label><input id="athSponsor" placeholder="π.χ. Shimano"></div>
+        <div>
+          <label>Αρ. Μητρώου</label>
+          <input id="athReg" placeholder="π.χ. 12345">
+        </div>
+        <div>
+          <label>Χορηγός</label>
+          <input id="athSponsor" placeholder="π.χ. Shimano">
+        </div>
       </div>
+
       <div class="row" style="margin-top:8px">
         <button class="primary" id="addAthleteBtn">➕ Προσθήκη</button>
         <input id="excelInput" type="file" accept=".xlsx,.xls,.csv" style="display:none">
         <button class="warn" id="excelBtn">🗂️ Εισαγωγή από Excel</button>
       </div>
+
       <div class="small muted" style="margin-top:4px">
         Excel/CSV: στήλες <code>Όνομα, Σύλλογος, Αρ. Μητρώου, Χορηγός</code>
       </div>
@@ -145,20 +208,23 @@
 
     <div class="card">
       <h2>Ρυθμίσεις</h2>
+
       <div class="row">
         <div>
           <label>Όνομα διοργάνωσης</label>
           <input id="eventName" placeholder="π.χ. Πρωτάθλημα Καθετής">
         </div>
         <div>
-          <label>Αριθμός τομέων για την κλήρωση</label>
+          <label>Αριθμός τομέων</label>
           <input id="numSectors" type="number" min="1" max="26" value="5">
         </div>
       </div>
+
       <div class="small muted" style="margin-top:6px">
-        Κλήρωση: οι αθλητές μοιράζονται όσο γίνεται ισόποσα στους τομείς (A, B, C, ...).<br>
-        Όσο γίνεται, αθλητές της ίδιας ομάδας δεν πέφτουν στον ίδιο τομέα (αν είναι περισσότεροι από τους τομείς, λογικά θα συναντιούνται).
+        Οι αθλητές μοιράζονται ισόποσα όσο γίνεται στους τομείς (A,B,C...)<br>
+        Προσπαθεί να κρατάει αθλητές ίδιου συλλόγου χωριστά – εκτός αν δεν γίνεται.
       </div>
+
       <div class="row" style="justify-content:flex-end;margin-top:8px">
         <button class="ghost" id="saveStateBtn">💾 Αποθήκευση</button>
         <button class="ghost" id="loadStateBtn">📂 Φόρτωση</button>
@@ -172,13 +238,11 @@
     </div>
   </section>
 
-  <!-- ΗΜΕΡΕΣ & ΚΛΗΡΩΣΗ -->
+  <!-- --- ΣΕΛΙΔΑ ΚΛΗΡΩΣΗΣ --- -->
   <section id="p-draw" class="page" style="display:none">
     <div class="card">
       <h2>Ημέρες</h2>
-      <div class="row" style="margin-top:4px">
-        <button class="primary" id="addDayBtn">➕ Προσθήκη ημέρας</button>
-      </div>
+      <button class="primary" id="addDayBtn">➕ Προσθήκη ημέρας</button>
       <div class="pill small" style="margin-top:8px">Ενεργή ημέρα:</div>
       <div id="daysTabs" style="margin-top:4px"></div>
     </div>
@@ -186,56 +250,70 @@
     <div class="card">
       <div class="row" style="align-items:center;justify-content:space-between">
         <h2>Κλήρωση τομέων & θέσεων</h2>
+
         <div class="row" style="flex:0;gap:6px">
           <button class="primary" id="drawBtn">🎲 Κλήρωση</button>
           <button class="ghost" id="clearDrawBtn">↩️ Καθαρισμός</button>
-          <button class="ghost" id="exportDrawBtn">⬇️ Εξαγωγή κλήρωσης (Excel)</button>
+          <button class="ghost" id="exportDrawBtn">⬇️ Εξαγωγή Excel</button>
         </div>
       </div>
+
       <div id="sectorInfo" class="small muted" style="margin-top:4px"></div>
+
       <div class="table-wrap" id="drawTableWrap" style="margin-top:8px"></div>
     </div>
   </section>
 
-  <!-- ΚΑΤΑΓΡΑΦΗ -->
+  <!-- --- ΣΕΛΙΔΑ ΚΑΤΑΓΡΑΦΗΣ --- -->
   <section id="p-entry" class="page" style="display:none">
     <div class="card">
-      <h2>Καταγραφή (ανά ημέρα) — Κατηγορίες & Βαθμοί Ποινής</h2>
+      <h2>Καταγραφή ημέρας — Κατηγορίες 1–5</h2>
+
       <div class="small muted">
-        Κατηγορίες 1–5 με αντίστοιχη ποινή (1,2,3,4,5 βαθμοί) ανά ψάρι.<br>
-        <b>Β. Ποινής = Σ (κατηγορία × ποσότητα)</b> — στην κατάταξη <b>πρώτος είναι αυτός με τους ΠΕΡΙΣΣΟΤΕΡΟΥΣ βαθμούς ποινής</b>.<br>
-        Ισοβαθμία: 1) περισσότερα ψάρια, 2) μεγαλύτερο αλίευμα.
+        Κατηγορία 1 = 1 βαθμός / ψάρι  
+        Κατηγορία 2 = 2 βαθμοί / ψάρι  
+        Κατηγορία 3 = 3 βαθμοί / ψάρι  
+        Κατηγορία 4 = 4 βαθμοί / ψάρι  
+        Κατηγορία 5 = 5 βαθμοί / ψάρι  
+        <br><br>
+        <b>Κατάταξη ημέρας:</b>  
+        1) Περισσότεροι βαθμοί ποινής  
+        2) Περισσότερα ψάρια  
+        3) Μεγαλύτερο αλίευμα  
       </div>
+
       <div class="table-wrap" id="resultsTableWrap" style="margin-top:8px"></div>
     </div>
   </section>
 
-  <!-- ΒΑΘΜΟΛΟΓΙΕΣ -->
+  <!-- --- ΣΕΛΙΔΑ ΒΑΘΜΟΛΟΓΙΩΝ --- -->
   <section id="p-scores" class="page" style="display:none">
     <div class="card">
       <div class="row" style="align-items:center;justify-content:space-between">
         <h2>Βαθμολογίες</h2>
         <button class="primary" id="exportScoresBtn">⬇️ Εξαγωγή Excel</button>
       </div>
+
       <div id="scoreTabs" style="margin-top:8px"></div>
       <div class="table-wrap" id="scoreTables"></div>
     </div>
   </section>
 </div>
-
 <script>
+/* ================= ΒΟΗΘΗΤΙΚΑ ================= */
 function $(id){return document.getElementById(id);}
 function uid(){return Math.random().toString(36).slice(2,9);}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function safe(s){s = s==null ? "" : String(s); return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 
+/* ================= ΚΑΤΑΣΤΑΣΗ ================= */
 let state = {
   settings: {
     eventName: "",
     numSectors: 5
   },
-  athletes: [],
-  days: [],
+  athletes: [], // {id,name,club,regNo,sponsor}
+  days: [],     // {id,name,draw:{athId:{sector,peg}},results:{athId:{cats[5],biggest,status}}}
   activeDayId: null
 };
 
@@ -250,10 +328,11 @@ function activeDay(){return state.days.find(d=>d.id===state.activeDayId)||null;}
 function sectorLabels(){
   const n=Math.max(1,Math.min(26,Number(state.settings.numSectors)||1));
   const arr=[];
-  for(let i=0;i<n;i++) arr.push(String.fromCharCode(65+i));
+  for(let i=0;i<n;i++) arr.push(String.fromCharCode(65+i)); // A,B,...
   return arr;
 }
 
+/* ================= ΠΛΟΗΓΗΣΗ ================= */
 function showPage(pid){
   document.querySelectorAll(".page").forEach(p=>p.style.display=(p.id===pid?"block":"none"));
   document.querySelectorAll("#topNav button").forEach(b=>b.classList.toggle("active",b.getAttribute("data-page")===pid));
@@ -263,6 +342,7 @@ document.getElementById("topNav").addEventListener("click",e=>{
   if(e.target.tagName==="BUTTON") showPage(e.target.dataset.page);
 });
 
+/* ================= ΣΥΜΜΕΤΕΧΟΝΤΕΣ ================= */
 function renderAthletes(){
   const wrap=$("athletesTableWrap");
   if(!state.athletes.length){
@@ -282,6 +362,7 @@ function renderAthletes(){
   });
   html+='</tbody></table>';
   wrap.innerHTML=html;
+
   wrap.querySelectorAll("[data-del]").forEach(btn=>{
     btn.onclick=()=>{
       const id=btn.dataset.del;
@@ -292,6 +373,7 @@ function renderAthletes(){
   });
 }
 
+/* ================= ΗΜΕΡΕΣ ================= */
 function renderDaysTabs(){
   const wrap=$("daysTabs");
   wrap.innerHTML="";
@@ -309,6 +391,7 @@ function renderDaysTabs(){
   });
 }
 
+/* ================= ΚΛΗΡΩΣΗ ================= */
 function renderDraw(){
   const wrap=$("drawTableWrap");
   const info=$("sectorInfo");
@@ -319,6 +402,7 @@ function renderDraw(){
     wrap.innerHTML='<p class="muted">Πρόσθεσε ημέρα.</p>';
     return;
   }
+
   const rows=state.athletes.map(a=>({a,dd:d.draw && d.draw[a.id]}))
     .sort((x,y)=>{
       const sx=x.dd?x.dd.sector:"";
@@ -330,6 +414,7 @@ function renderDraw(){
       }
       return sx.localeCompare(sy);
     });
+
   let html='<table><thead><tr><th>#</th><th>Όνομα</th><th>Σύλλογος</th><th>Τομέας</th><th>Θέση</th></tr></thead><tbody>';
   rows.forEach((r,i)=>{
     html+=`<tr>
@@ -350,21 +435,25 @@ function doDraw(){
   const sectors=sectorLabels();
   const N=state.athletes.length;
   if(!N){alert("Δεν υπάρχουν αθλητές.");return;}
+
   const S=sectors.length;
   const base=Math.floor(N/S);
   const rem=N%S;
+
   const capacity=new Map();
   sectors.forEach((s,i)=>capacity.set(s, base+(i<rem?1:0)));
   const buckets=new Map(sectors.map(s=>[s,[]]));
   const clubInSec=new Map(sectors.map(s=>[s,new Set()]));
   const filled=new Map(sectors.map(s=>[s,0]));
 
+  // Ομαδοποίηση ανά σύλλογο
   const byClub=new Map();
   state.athletes.forEach(a=>{
     const c=(a.club||"-").trim()||"-";
     if(!byClub.has(c)) byClub.set(c,[]);
     byClub.get(c).push(a);
   });
+
   const clubs=Array.from(byClub.entries()).sort((a,b)=>b[1].length-a[1].length);
   const ordered=[];
   clubs.forEach(([c,arr])=>{
@@ -399,6 +488,7 @@ function doDraw(){
   });
 }
 
+/* ================= ΚΑΤΑΓΡΑΦΗ ================= */
 function renderResults(){
   const wrap=$("resultsTableWrap");
   const d=activeDay();
@@ -406,6 +496,7 @@ function renderResults(){
     wrap.innerHTML='<p class="muted">Πρόσθεσε ημέρα & κλήρωση.</p>';
     return;
   }
+
   const rows=state.athletes.map(a=>({a,dd:d.draw && d.draw[a.id]}))
     .sort((x,y)=>{
       const sx=x.dd?x.dd.sector:"";
@@ -455,47 +546,55 @@ function renderResults(){
       </td>
     </tr>`;
   });
+
   html+='</tbody></table>';
   wrap.innerHTML=html;
 
+  // 🔥 onchange ώστε να προλαβαίνεις να γράφεις πολλά ψηφία
   wrap.querySelectorAll("input,select").forEach(el=>{
-  el.onchange=()=>{
-    const id=el.dataset.id;
-    const field=el.dataset.f;
-    if(!d.results[id]) d.results[id]={cats:[0,0,0,0,0],biggest:0,status:"OK"};
-    const obj=d.results[id];
-    if(field.startsWith("cat")){
-      const idx=Number(field.replace("cat",""));
-      obj.cats[idx]=Number(el.value||0);
-    }else if(field==="biggest"){
-      obj.biggest=Number(el.value||0);
-    }else if(field==="status"){
-      obj.status=el.value;
-    }
-    save();
-    renderResults();
-    renderScores();
-  };
-});
+    el.onchange=()=>{
+      const id=el.dataset.id;
+      const field=el.dataset.f;
+      if(!d.results[id]) d.results[id]={cats:[0,0,0,0,0],biggest:0,status:"OK"};
+      const obj=d.results[id];
 
+      if(field && field.startsWith("cat")){
+        const idx=Number(field.replace("cat",""));
+        obj.cats[idx]=Number(el.value||0);
+      }else if(field==="biggest"){
+        obj.biggest=Number(el.value||0);
+      }else if(field==="status"){
+        obj.status=el.value;
+      }
+
+      save();
+      renderResults();
+      renderScores();
+    };
+  });
 }
 
+/* ================= ΥΠΟΛΟΓΙΣΜΟΙ ================= */
 function computeDayRows(dayId){
   const d=state.days.find(x=>x.id===dayId);
   if(!d) return [];
+
   const rows=[];
   state.athletes.forEach(a=>{
     const dd=d.draw && d.draw[a.id];
     if(!dd) return;
+
     const res=(d.results && d.results[a.id]) || {cats:[0,0,0,0,0],biggest:0,status:"OK"};
     const cats=res.cats||[0,0,0,0,0];
     const totalFish=cats.reduce((s,x)=>s+Number(x||0),0);
     let penalty=cats.reduce((s,x,idx)=>s+Number(x||0)*(idx+1),0);
     let biggest=Number(res.biggest||0);
+
     if(res.status!=="OK"){
       penalty = 0;
       biggest = 0;
     }
+
     rows.push({
       id:a.id,
       name:a.name,
@@ -511,17 +610,20 @@ function computeDayRows(dayId){
       status:res.status
     });
   });
+
   rows.sort((a,b)=>{
     return (b.penalty-a.penalty) ||
            (b.totalFish-a.totalFish) ||
            (b.biggest-a.biggest) ||
            a.name.localeCompare(b.name,'el');
   });
+
   return rows;
 }
 
 function computeAggregate(){
   const agg=new Map();
+
   state.athletes.forEach(a=>{
     agg.set(a.id,{
       id:a.id,
@@ -534,9 +636,11 @@ function computeAggregate(){
       bestBiggest:0
     });
   });
+
   state.days.forEach(d=>{
     const rows=computeDayRows(d.id);
     const byId=new Map(rows.map(r=>[r.id,r]));
+
     agg.forEach((v,id)=>{
       const r=byId.get(id);
       if(!r) return;
@@ -545,6 +649,7 @@ function computeAggregate(){
       v.bestBiggest = Math.max(v.bestBiggest, r.biggest);
     });
   });
+
   const out=Array.from(agg.values());
   out.sort((a,b)=>{
     return (b.totalPenalty-a.totalPenalty) ||
@@ -552,29 +657,35 @@ function computeAggregate(){
            (b.bestBiggest-a.bestBiggest) ||
            a.name.localeCompare(b.name,'el');
   });
+
   return out;
 }
 
 function computeTeamAggregate(){
   const ind=computeAggregate();
   const byClub=new Map();
+
   ind.forEach(r=>{
     const c=(r.club||"-").trim()||"-";
     if(!byClub.has(c)) byClub.set(c,[]);
     byClub.get(c).push(r);
   });
+
   const teams=[];
   byClub.forEach((list,club)=>{
-    if(list.length<2) return;
+    if(list.length<2) return; // τουλάχιστον 2 αθλητές
+
     list.sort((a,b)=>{
       return (b.totalPenalty-a.totalPenalty) ||
              (b.totalFish-a.totalFish) ||
              (b.bestBiggest-a.bestBiggest);
     });
+
     const best2=list.slice(0,2);
     const teamPenalty=best2[0].totalPenalty+best2[1].totalPenalty;
     const teamFish=best2[0].totalFish+best2[1].totalFish;
     const teamBig=Math.max(best2[0].bestBiggest,best2[1].bestBiggest);
+
     teams.push({
       club,
       members:best2.map(x=>x.name),
@@ -583,15 +694,18 @@ function computeTeamAggregate(){
       teamBig
     });
   });
+
   teams.sort((a,b)=>{
     return (b.teamPenalty-a.teamPenalty) ||
            (b.teamFish-a.teamFish) ||
            (b.teamBig-a.teamBig) ||
            a.club.localeCompare(b.club,'el');
   });
+
   return teams;
 }
 
+/* ================= ΒΑΘΜΟΛΟΓΙΕΣ UI ================= */
 function makeTable(rows,title,headers){
   let html=`<h3 style="margin:6px 0">${safe(title)}</h3><table><thead><tr>`;
   headers.forEach(h=>html+=`<th>${safe(h)}</th>`);
@@ -608,6 +722,7 @@ function renderScores(){
   tabs.innerHTML=""; area.innerHTML="";
   let firstClicked=false;
 
+  // Καρτέλες για ΟΛΕΣ τις ημέρες (ατομικό)
   state.days.forEach((d,idx)=>{
     const b=document.createElement("button");
     b.className="pill";
@@ -638,6 +753,7 @@ function renderScores(){
     if(!firstClicked){ b.click(); firstClicked=true; }
   });
 
+  // Συνολικό ατομικό
   const bAgg=document.createElement("button");
   bAgg.className="pill";
   bAgg.textContent="Συνολικό Ατομικό (άθροισμα Β. Ποινής)";
@@ -662,6 +778,7 @@ function renderScores(){
   tabs.appendChild(bAgg);
   if(!firstClicked){ bAgg.click(); firstClicked=true; }
 
+  // Ομαδικό (2 καλύτεροι)
   const bTeam=document.createElement("button");
   bTeam.className="pill";
   bTeam.textContent="Ομαδικό (2 καλύτεροι ανά σύλλογο)";
@@ -684,6 +801,7 @@ function renderScores(){
   tabs.appendChild(bTeam);
 }
 
+/* ================= ΕΞΑΓΩΓΕΣ ================= */
 function exportDrawExcel(){
   const d=activeDay();
   if(!d || !d.draw || !Object.keys(d.draw).length){alert("Δεν υπάρχει κλήρωση.");return;}
@@ -701,6 +819,7 @@ function exportDrawExcel(){
     return String(x["Τομέας"]).localeCompare(String(y["Τομέας"])) ||
            (Number(x["Θέση"]||999999)-Number(y["Θέση"]||999999));
   });
+
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),"Κλήρωση");
   const name=(state.settings.eventName||"Klirosi");
@@ -709,6 +828,7 @@ function exportDrawExcel(){
 
 function exportScoresExcel(){
   const wb=XLSX.utils.book_new();
+
   const agg=computeAggregate().map((r,i)=>({
     "#":i+1,
     "Όνομα":r.name,
@@ -757,11 +877,13 @@ function exportScoresExcel(){
   XLSX.writeFile(wb,`Scores_${name}.xlsx`);
 }
 
+/* ================= IMPORT ΑΘΛΗΤΩΝ ================= */
 function importAthletesFromFile(ev){
   const file=ev.target.files[0];
   if(!file)return;
   const name=file.name.toLowerCase();
   const reader=new FileReader();
+
   if(name.endsWith(".csv")){
     reader.onload=()=>{
       const lines=reader.result.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
@@ -796,6 +918,7 @@ function importAthletesFromFile(ev){
   }
 }
 
+/* ================= RENDER ΟΛΩΝ ================= */
 function renderAll(){
   $("eventName").value = state.settings.eventName||"";
   $("numSectors").value = state.settings.numSectors||5;
@@ -806,6 +929,7 @@ function renderAll(){
   renderScores();
 }
 
+/* ================= ΔΕΣΙΜΟ EVENTS ================= */
 function bindEvents(){
   $("addAthleteBtn").onclick=()=>{
     const name=$("athName").value.trim();
@@ -817,6 +941,7 @@ function bindEvents(){
     ["athName","athClub","athReg","athSponsor"].forEach(id=>{$(id).value="";});
     save(); renderAll();
   };
+
   $("excelBtn").onclick=()=>{$("excelInput").click();};
   $("excelInput").onchange=importAthletesFromFile;
 
@@ -835,6 +960,7 @@ function bindEvents(){
     d.draw={};
     save(); renderDraw(); renderResults(); renderScores();
   };
+
   $("exportDrawBtn").onclick=exportDrawExcel;
   $("exportScoresBtn").onclick=exportScoresExcel;
 
@@ -856,6 +982,7 @@ function bindEvents(){
   };
 }
 
+/* ================= INIT ================= */
 window.addEventListener("load",()=>{
   load();
   if(!state.days.length){
@@ -869,5 +996,6 @@ window.addEventListener("load",()=>{
   showPage("p-participants");
 });
 </script>
+
 </body>
 </html>
