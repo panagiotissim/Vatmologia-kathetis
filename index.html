@@ -144,16 +144,32 @@
 
   /* 🔥 Μεγάλα κουτάκια ΕΙΔΙΚΑ για την καταγραφή */
   .field-input{
-    width:100%;
-    padding:14px 16px;
-    border-radius:12px;
-    border:1px solid #273244;
-    background:#020617;
-    color:#e5e7eb;
-    font-size:16px;
-    min-height:48px;
-    box-sizing:border-box;
-  }
+  width:100%;
+  padding:10px 8px;
+  border-radius:8px;
+  border:1px solid #273244;
+  background:#ffffff;
+  color:#000000;
+  font-size:20px;
+  min-height:40px;
+  box-sizing:border-box;
+  text-align:right;       /* οι αριθμοί δεξιά */
+  font-family: monospace; /* σταθερό πλάτος, φαίνονται καθαρά */
+}
+/* Οι στήλες Cat1–Cat5 να είναι πιο φαρδιές */
+#resultsTableWrap table th:nth-child(6),
+#resultsTableWrap table th:nth-child(7),
+#resultsTableWrap table th:nth-child(8),
+#resultsTableWrap table th:nth-child(9),
+#resultsTableWrap table th:nth-child(10),
+#resultsTableWrap table td:nth-child(6),
+#resultsTableWrap table td:nth-child(7),
+#resultsTableWrap table td:nth-child(8),
+#resultsTableWrap table td:nth-child(9),
+#resultsTableWrap table td:nth-child(10){
+  min-width:70px;
+}
+
 
   .field-input[type=number]::-webkit-inner-spin-button,
   .field-input[type=number]::-webkit-outer-spin-button{
